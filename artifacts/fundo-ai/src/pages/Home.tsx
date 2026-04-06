@@ -982,23 +982,25 @@ export default function Home() {
                 <h4 className="text-sm font-bold text-white mb-5 uppercase tracking-[0.14em]">Navigate</h4>
                 <ul className="space-y-3">
                   {[
-                    { label: "Features",             href: "#features" },
-                    { label: "How It Works",          href: "#how" },
-                    { label: "Live Demo",             href: "#demo" },
-                    { label: "About FUNDO AI",        href: "#" },
-                    { label: "Creator — Darrell Mucheri", href: "#" },
+                    { label: "Features",                  href: "#features" },
+                    { label: "How It Works",              href: "#how" },
+                    { label: "Live Demo",                 href: "#demo" },
+                    { label: "About FUNDO AI",            href: "/about" },
+                    { label: "Creator — Darrell Mucheri", href: "/about" },
+                    { label: "Privacy Policy",            href: "/privacy" },
+                    { label: "Terms of Use",              href: "/terms" },
                   ].map(({ label, href }) => (
                     <li key={label}>
-                      <a
-                        href={href}
-                        className="flex items-center gap-2 text-sm transition-all duration-200 group"
-                        style={{ color: "rgba(255,255,255,0.40)" }}
+                      <button
+                        onClick={() => handleNavClick(href)}
+                        className="flex items-center gap-2 text-sm transition-all duration-200 text-left w-full"
+                        style={{ color: "rgba(255,255,255,0.40)", paddingLeft: 0 }}
                         onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.paddingLeft = "4px"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.40)"; e.currentTarget.style.paddingLeft = "0"; }}
                       >
                         <ChevronRight size={12} style={{ color: "#a855f7", flexShrink: 0 }} />
                         {label}
-                      </a>
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -1060,16 +1062,20 @@ export default function Home() {
                 🇿🇼 Made in Zimbabwe with ❤️
               </div>
               <div className="flex items-center gap-4 text-xs" style={{ color: "rgba(255,255,255,0.27)" }}>
-                {["Privacy Policy", "Terms of Use"].map((l) => (
-                  <a
-                    key={l}
-                    href="#"
+                {[
+                  { label: "About",          href: "/about" },
+                  { label: "Privacy Policy", href: "/privacy" },
+                  { label: "Terms of Use",   href: "/terms" },
+                ].map(({ label, href }) => (
+                  <button
+                    key={label}
+                    onClick={() => handleNavClick(href)}
                     className="transition-colors duration-200"
                     onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.27)"; }}
                   >
-                    {l}
-                  </a>
+                    {label}
+                  </button>
                 ))}
               </div>
             </div>
