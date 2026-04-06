@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useLocation } from "wouter";
+import { useAuth } from "@/lib/auth";
 import {
   Brain, BookOpen, Globe, Zap, MessageCircle, FileText,
   Search, Music, Calculator, FlaskConical, Microscope, Atom,
@@ -420,11 +422,24 @@ export default function Home() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const [, nav] = useLocation();
+  const { user, logout } = useAuth();
+
   const NAV_LINKS = [
     { label: "Features",    href: "#features" },
     { label: "How It Works",href: "#how" },
     { label: "Demo",        href: "#demo" },
+    { label: "About",       href: "/about" },
   ];
+
+  function handleNavClick(href: string) {
+    setMobileOpen(false);
+    if (href.startsWith("#")) {
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      nav(href);
+    }
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: "linear-gradient(135deg, #080511 0%, #050a14 50%, #09091a 100%)" }}>
@@ -496,16 +511,16 @@ export default function Home() {
             {/* Desktop links */}
             <div className="hidden md:flex items-center gap-1">
               {NAV_LINKS.map(({ label, href }) => (
-                <a
+                <button
                   key={label}
-                  href={href}
+                  onClick={() => handleNavClick(href)}
                   className="relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 group overflow-hidden"
                   style={{ color: "rgba(255,255,255,0.52)" }}
                   onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; e.currentTarget.style.background = "rgba(255,255,255,0.06)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.52)"; e.currentTarget.style.background = "transparent"; }}
                 >
                   {label}
-                </a>
+                </button>
               ))}
             </div>
 
@@ -515,18 +530,37 @@ export default function Home() {
                 <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                 Free to use
               </div>
-              <a
-                href="https://wa.me/263719647303"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all duration-300"
-                style={{ background: "linear-gradient(135deg, #25d366, #128c7e)", boxShadow: "0 3px 14px rgba(37,211,102,0.28)" }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1.04)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 6px 24px rgba(37,211,102,0.42)"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "none"; (e.currentTarget as HTMLElement).style.boxShadow = "0 3px 14px rgba(37,211,102,0.28)"; }}
-              >
-                <MessageCircle size={14} />
-                Chat Now
-              </a>
+              {user ? (
+                <div className="hidden sm:flex items-center gap-2">
+                  <button onClick={() => nav("/chat")}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all duration-300"
+                    style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 3px 14px rgba(168,85,247,0.28)" }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = "scale(1.04)"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "none"; }}>
+                    <MessageCircle size={14} />Chat
+                  </button>
+                  <button onClick={logout}
+                    className="px-3 py-2 rounded-xl text-xs font-medium transition-all duration-200"
+                    style={{ color: "rgba(255,255,255,0.45)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                    Sign out
+                  </button>
+                </div>
+              ) : (
+                <div className="hidden sm:flex items-center gap-2">
+                  <button onClick={() => nav("/login")}
+                    className="px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200"
+                    style={{ color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}>
+                    Log in
+                  </button>
+                  <button onClick={() => nav("/chat")}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all duration-300"
+                    style={{ background: "linear-gradient(135deg, #25d366, #128c7e)", boxShadow: "0 3px 14px rgba(37,211,102,0.28)" }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1.04)"; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "none"; }}>
+                    <MessageCircle size={14} />Chat Now
+                  </button>
+                </div>
+              )}
               <button
                 onClick={() => setMobileOpen((o) => !o)}
                 className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200"
@@ -541,29 +575,28 @@ export default function Home() {
           {mobileOpen && (
             <div className="md:hidden pb-4 pt-2 space-y-1 slide-down" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               {NAV_LINKS.map(({ label, href }) => (
-                <a
+                <button
                   key={label}
-                  href={href}
-                  onClick={() => setMobileOpen(false)}
-                  className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200"
+                  onClick={() => handleNavClick(href)}
+                  className="flex items-center justify-between w-full px-4 py-3 rounded-xl text-sm font-medium text-left transition-all duration-200"
                   style={{ color: "rgba(255,255,255,0.72)" }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)"; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}
                 >
                   {label}
                   <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.28)" }} />
-                </a>
+                </button>
               ))}
-              <a
-                href="https://wa.me/263719647303"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold text-white mt-3 transition-all duration-200 active:scale-95"
-                style={{ background: "linear-gradient(135deg, #25d366, #128c7e)", boxShadow: "0 4px 16px rgba(37,211,102,0.3)" }}
-              >
-                <MessageCircle size={15} />
-                Chat Now on WhatsApp
-              </a>
+              <button onClick={() => handleNavClick("/chat")}
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold text-white mt-2 transition-all duration-200"
+                style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 16px rgba(168,85,247,0.3)" }}>
+                <MessageCircle size={15} />Chat Now
+              </button>
+              {!user && (
+                <button onClick={() => handleNavClick("/login")}
+                  className="flex items-center justify-center w-full py-3 rounded-xl text-sm font-medium mt-1"
+                  style={{ color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                  Log in
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -605,40 +638,39 @@ export default function Home() {
 
         {/* CTA */}
         <div style={{ opacity: mounted ? 1 : 0, transform: mounted ? "none" : "translateY(20px)", transition: "opacity 0.8s ease 0.4s, transform 0.8s cubic-bezier(0.22,1,0.36,1) 0.4s" }}>
-          <a
-            href="https://wa.me/263719647303"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-3 px-8 sm:px-10 py-4 rounded-2xl text-base font-semibold text-white transition-all duration-300 active:scale-95"
-            style={{
-              background: "rgba(255,255,255,0.07)",
-              border: "1px solid rgba(255,255,255,0.13)",
-              boxShadow: "0 2px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.09)",
-              backdropFilter: "blur(14px)",
-            }}
-            onMouseEnter={(e) => {
-              const el = e.currentTarget as HTMLElement;
-              el.style.background = "rgba(255,255,255,0.10)";
-              el.style.borderColor = "rgba(37,211,102,0.38)";
-              el.style.transform = "scale(1.03)";
-              el.style.boxShadow = "0 8px 32px rgba(0,0,0,0.35), 0 0 0 1px rgba(37,211,102,0.15), inset 0 1px 0 rgba(255,255,255,0.1)";
-            }}
-            onMouseLeave={(e) => {
-              const el = e.currentTarget as HTMLElement;
-              el.style.background = "rgba(255,255,255,0.07)";
-              el.style.borderColor = "rgba(255,255,255,0.13)";
-              el.style.transform = "none";
-              el.style.boxShadow = "0 2px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.09)";
-            }}
-          >
-            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#25d366" }}>
-              <MessageCircle size={13} className="text-white" />
-            </div>
-            Start Chatting on WhatsApp
-            <ChevronRight size={16} style={{ color: "rgba(255,255,255,0.38)", transition: "transform 0.25s ease, color 0.25s ease" }} className="group-hover:translate-x-1" />
-          </a>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 flex-wrap">
+            <button
+              onClick={() => nav("/chat")}
+              className="group inline-flex items-center gap-3 px-8 sm:px-10 py-4 rounded-2xl text-base font-bold text-white transition-all duration-300 active:scale-95"
+              style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 24px rgba(168,85,247,0.4)" }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = "scale(1.04)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 8px 36px rgba(168,85,247,0.55)"; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = "none"; (e.currentTarget as HTMLElement).style.boxShadow = "0 4px 24px rgba(168,85,247,0.4)"; }}
+            >
+              <Bot size={18} />Try Web Chat Free
+              <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+            <a
+              href="https://wa.me/263719647303"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl text-base font-semibold text-white transition-all duration-300 active:scale-95"
+              style={{
+                background: "rgba(255,255,255,0.07)",
+                border: "1px solid rgba(255,255,255,0.13)",
+                boxShadow: "0 2px 16px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.09)",
+                backdropFilter: "blur(14px)",
+              }}
+              onMouseEnter={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.10)"; el.style.borderColor = "rgba(37,211,102,0.38)"; el.style.transform = "scale(1.03)"; }}
+              onMouseLeave={(e) => { const el = e.currentTarget as HTMLElement; el.style.background = "rgba(255,255,255,0.07)"; el.style.borderColor = "rgba(255,255,255,0.13)"; el.style.transform = "none"; }}
+            >
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#25d366" }}>
+                <MessageCircle size={13} className="text-white" />
+              </div>
+              WhatsApp Bot
+            </a>
+          </div>
           <p className="mt-5 text-sm" style={{ color: "rgba(255,255,255,0.28)" }}>
-            Free · No download · Works on any phone · Created by{" "}
+            Free · No download · Works on any device · Created by{" "}
             <span className="font-semibold" style={{ color: "#a855f7" }}>Darrell Mucheri</span> 🇿🇼
           </p>
         </div>
