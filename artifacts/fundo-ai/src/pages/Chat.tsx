@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Send, Loader2, Bot, User, Trash2, MessageCircle, Sparkles, Globe,
   Zap, ChevronRight, Lock, ArrowRight, X, Paperclip, Image as ImageIcon,
-  FileText, FileType2, Clock, History, ChevronLeft,
+  FileText, FileType2, Clock, History, ChevronLeft, KeyRound, LogOut, Eye, EyeOff,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
@@ -174,6 +174,99 @@ function HistorySidebar({ messages, onClose, onClearAll, clearing }: {
   );
 }
 
+/* ── Set Password Modal ────────────────────────────────── */
+function SetPasswordModal({ hasPassword, onClose }: { hasPassword: boolean; onClose: () => void }) {
+  const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirm: "" });
+  const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (form.newPassword.length < 6) { setError("Password must be at least 6 characters"); return; }
+    if (form.newPassword !== form.confirm) { setError("Passwords don't match"); return; }
+    setLoading(true);
+    try {
+      await api.setPassword({ newPassword: form.newPassword, currentPassword: form.currentPassword || undefined });
+      setDone(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally { setLoading(false); }
+  }
+
+  const inp = (style?: object) => ({
+    background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+    ...style,
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(6,3,15,0.88)", backdropFilter: "blur(16px)" }}>
+      <div className="relative w-full max-w-sm rounded-3xl p-7" style={{ background: "rgba(15,10,30,0.98)", border: "1px solid rgba(168,85,247,0.25)", boxShadow: "0 0 80px rgba(168,85,247,0.18), 0 32px 80px rgba(0,0,0,0.7)" }}>
+        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center" style={{ color: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.05)" }}><X size={14} /></button>
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.2),rgba(124,58,237,0.12))", border: "1px solid rgba(168,85,247,0.25)" }}>
+          <KeyRound size={24} style={{ color: "#a855f7" }} />
+        </div>
+        <h2 className="text-xl font-black text-white mb-1">{hasPassword ? "Change Password" : "Set a Password"}</h2>
+        <p className="text-xs mb-5" style={{ color: "rgba(255,255,255,0.4)" }}>
+          {hasPassword ? "Enter your current password to change it." : "Add a password so you can also log in without a magic link."}
+        </p>
+
+        {done ? (
+          <div className="text-center py-4">
+            <div className="text-3xl mb-3">✅</div>
+            <p className="text-sm font-semibold text-white mb-1">Password {hasPassword ? "changed" : "set"}!</p>
+            <p className="text-xs mb-5" style={{ color: "rgba(255,255,255,0.4)" }}>You can now sign in with email + password.</p>
+            <button onClick={onClose} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)" }}>Done</button>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="space-y-3">
+            {error && <div className="px-3 py-2.5 rounded-xl text-xs font-medium" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}>{error}</div>}
+            {hasPassword && (
+              <div>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>Current password</label>
+                <input type={showPw ? "text" : "password"} value={form.currentPassword}
+                  onChange={e => setForm(f => ({ ...f, currentPassword: e.target.value }))}
+                  placeholder="••••••••" required
+                  className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none"
+                  style={inp()} />
+              </div>
+            )}
+            <div>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>New password</label>
+              <div className="relative">
+                <input type={showPw ? "text" : "password"} value={form.newPassword}
+                  onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
+                  placeholder="Min. 6 characters" required
+                  className="w-full px-4 pr-10 py-2.5 rounded-xl text-sm text-white outline-none"
+                  style={inp()} />
+                <button type="button" onClick={() => setShowPw(s => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>Confirm password</label>
+              <input type={showPw ? "text" : "password"} value={form.confirm}
+                onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
+                placeholder="Repeat new password" required
+                className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none"
+                style={inp()} />
+            </div>
+            <button type="submit" disabled={loading}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white mt-1"
+              style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 16px rgba(168,85,247,0.35)", opacity: loading ? 0.7 : 1 }}>
+              {loading ? <Loader2 size={15} className="animate-spin" /> : <><KeyRound size={14} />{hasPassword ? "Change Password" : "Set Password"}</>}
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ── File chip in input ────────────────────────────────── */
 function FileChip({ file, onRemove }: { file: AttachedFile; onRemove: () => void }) {
   const icon = file.type === "image" ? <ImageIcon size={13} style={{ color: "#06b6d4" }} />
@@ -211,6 +304,9 @@ export default function Chat() {
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadErr, setUploadErr] = useState("");
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showSetPw, setShowSetPw] = useState(false);
+  const [hasPassword, setHasPassword] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -230,6 +326,7 @@ export default function Chat() {
         }));
         setMessages(hist);
       }).catch(() => {}).finally(() => setHistLoading(false));
+      api.me().then(d => setHasPassword(!!d.user?.hasPassword)).catch(() => {});
     }
   }, [user]);
 
@@ -319,6 +416,8 @@ export default function Chat() {
   return (
     <PageLayout>
       {showWall && <GuestWall onClose={() => setShowWall(false)} />}
+      {showSetPw && <SetPasswordModal hasPassword={hasPassword} onClose={() => { setShowSetPw(false); api.me().then(d => setHasPassword(!!d.user?.hasPassword)).catch(() => {}); }} />}
+      {showUserMenu && <div className="fixed inset-0 z-30" onClick={() => setShowUserMenu(false)} />}
 
       {/* Hidden file input */}
       <input ref={fileInputRef} type="file" className="hidden"
@@ -372,6 +471,41 @@ export default function Chat() {
                   style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 2px 10px rgba(168,85,247,0.3)" }}>
                   Sign up free
                 </button>
+              )}
+              {user && (
+                <div className="relative">
+                  <button onClick={() => setShowUserMenu(m => !m)}
+                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all"
+                    style={{ background: showUserMenu ? "rgba(168,85,247,0.15)" : "rgba(255,255,255,0.05)", border: `1px solid ${showUserMenu ? "rgba(168,85,247,0.3)" : "rgba(255,255,255,0.08)"}` }}>
+                    <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold text-white"
+                      style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)" }}>
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="hidden sm:block text-xs font-semibold text-white max-w-[80px] truncate">{user.name.split(" ")[0]}</span>
+                  </button>
+                  {showUserMenu && (
+                    <div className="absolute right-0 top-full mt-1.5 w-44 rounded-2xl overflow-hidden z-40"
+                      style={{ background: "rgba(15,10,30,0.98)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.7)" }}>
+                      <button onClick={() => { setShowSetPw(true); setShowUserMenu(false); }}
+                        className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-semibold transition-colors text-left"
+                        style={{ color: "rgba(255,255,255,0.75)" }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(168,85,247,0.1)"; e.currentTarget.style.color = "#fff"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}>
+                        <KeyRound size={13} style={{ color: "#a855f7" }} />
+                        {hasPassword ? "Change Password" : "Set Password"}
+                      </button>
+                      <div style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
+                      <button onClick={() => { localStorage.removeItem("fundo_token"); window.location.href = "/login"; }}
+                        className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-semibold transition-colors text-left"
+                        style={{ color: "rgba(255,255,255,0.75)" }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#fca5a5"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}>
+                        <LogOut size={13} style={{ color: "#f87171" }} />
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

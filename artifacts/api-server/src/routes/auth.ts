@@ -253,7 +253,34 @@ router.post("/reset-password", async (req, res) => {
 // ── GET /api/auth/me ──────────────────────────────────────────────────────────
 router.get("/me", requireAuth, (req, res) => {
   const user = (req as any).user;
-  res.json({ user: { id: user._id, name: user.name, email: user.email, level: user.level } });
+  res.json({ user: { id: user._id, name: user.name, email: user.email, level: user.level, hasPassword: !!user.password } });
+});
+
+// ── POST /api/auth/set-password ───────────────────────────────────────────────
+// Lets a logged-in user set or change their password
+router.post("/set-password", requireAuth, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      res.status(400).json({ error: "New password must be at least 6 characters" }); return;
+    }
+    // If they already have a password, verify the current one
+    if (user.password) {
+      if (!currentPassword) {
+        res.status(400).json({ error: "Enter your current password to change it" }); return;
+      }
+      const match = await bcrypt.compare(currentPassword, user.password);
+      if (!match) {
+        res.status(401).json({ error: "Current password is incorrect" }); return;
+      }
+    }
+    user.password = await bcrypt.hash(newPassword, 12);
+    await user.save();
+    res.json({ message: "Password set successfully" });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── PATCH /api/auth/profile ───────────────────────────────────────────────────

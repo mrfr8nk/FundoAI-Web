@@ -49,6 +49,8 @@ export const api = {
   me: () => request("/auth/me"),
   updateProfile: (body: { name?: string; level?: string }) =>
     request("/auth/profile", { method: "PATCH", body: JSON.stringify(body) }),
+  setPassword: (body: { newPassword: string; currentPassword?: string }) =>
+    request("/auth/set-password", { method: "POST", body: JSON.stringify(body) }),
 
   // AI
   chat: (message: string, imageBase64?: string) =>

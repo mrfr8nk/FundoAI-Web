@@ -7,10 +7,14 @@ import { User } from "../models/User";
 import { connectDB } from "../lib/mongo";
 
 const _req = createRequire(import.meta.url);
+// pdf-parse and mammoth are CJS packages — load via require and unwrap .default if needed
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const pdfParse: (buf: Buffer, opts?: any) => Promise<{ text: string; numpages: number }> = _req("pdf-parse");
+const _pdfMod: any = _req("pdf-parse");
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mammoth: { extractRawText: (opts: { buffer: Buffer }) => Promise<{ value: string }> } = _req("mammoth");
+const pdfParse: (buf: Buffer, opts?: any) => Promise<{ text: string; numpages: number }> = _pdfMod.default ?? _pdfMod;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const _mamMod: any = _req("mammoth");
+const mammoth: { extractRawText: (opts: { buffer: Buffer }) => Promise<{ value: string }> } = _mamMod.default ?? _mamMod;
 
 const router = Router();
 
