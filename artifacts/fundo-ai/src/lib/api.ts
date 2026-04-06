@@ -17,13 +17,23 @@ function headers(extra: Record<string, string> = {}) {
 }
 
 async function request(path: string, opts: RequestInit = {}) {
-  const res = await fetch(`${API}${path}`, {
-    ...opts,
-    headers: { ...headers(), ...(opts.headers as Record<string, string> || {}) },
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "Request failed");
-  return data;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000);
+  try {
+    const res = await fetch(`${API}${path}`, {
+      ...opts,
+      signal: controller.signal,
+      headers: { ...headers(), ...(opts.headers as Record<string, string> || {}) },
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Request failed");
+    return data;
+  } catch (err: any) {
+    if (err.name === "AbortError") throw new Error("Request timed out — please try again");
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export const api = {
@@ -64,13 +74,23 @@ export const api = {
   uploadFile: async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch(`${API}/ai/upload`, {
-      method: "POST",
-      headers: { ...(localStorage.getItem("fundo_token") ? { Authorization: `Bearer ${localStorage.getItem("fundo_token")}` } : {}) },
-      body: formData,
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.error || "Upload failed");
-    return data;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+    try {
+      const res = await fetch(`${API}/ai/upload`, {
+        method: "POST",
+        signal: controller.signal,
+        headers: { ...(localStorage.getItem("fundo_token") ? { Authorization: `Bearer ${localStorage.getItem("fundo_token")}` } : {}) },
+        body: formData,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      return data;
+    } catch (err: any) {
+      if (err.name === "AbortError") throw new Error("Upload timed out — please try again");
+      throw err;
+    } finally {
+      clearTimeout(timer);
+    }
   },
 };

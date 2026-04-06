@@ -1,5 +1,7 @@
 import nodemailer from "nodemailer";
 
+const SMTP_CONFIGURED = !!(process.env["SMTP_HOST"] && process.env["SMTP_USER"] && process.env["SMTP_PASS"]);
+
 const transporter = nodemailer.createTransport({
   host: process.env["SMTP_HOST"] || "smtp.gmail.com",
   port: Number(process.env["SMTP_PORT"] || 587),
@@ -9,6 +11,9 @@ const transporter = nodemailer.createTransport({
     pass: process.env["SMTP_PASS"],
   },
   tls: { rejectUnauthorized: false },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 15000,
 });
 
 /* ── Shared design tokens ───────────────────────────────── */
@@ -93,6 +98,10 @@ function base(preheader: string, body: string): string {
 
 /* ── Magic link email ────────────────────────────────────── */
 export async function sendMagicLinkEmail(to: string, name: string, link: string, isNew: boolean) {
+  if (!SMTP_CONFIGURED) {
+    console.warn(`[EMAIL] SMTP not configured. Would have sent magic link to ${to}: ${link}`);
+    throw new Error("Email service not configured. Please contact support or set SMTP environment variables.");
+  }
   const firstName = name.split(" ")[0];
   const action = isNew ? "Complete signup" : "Sign in";
   const heading = isNew ? "Finish creating your account 🚀" : "Sign in to FUNDO AI 🔐";
@@ -172,6 +181,10 @@ export async function sendVerificationEmail(to: string, name: string, code: stri
 }
 
 export async function sendPasswordResetEmail(to: string, name: string, code: string) {
+  if (!SMTP_CONFIGURED) {
+    console.warn(`[EMAIL] SMTP not configured. Password reset code for ${to}: ${code}`);
+    throw new Error("Email service not configured. Please contact support or set SMTP environment variables.");
+  }
   const digits = code.split("");
   const body = `
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:900;color:${WHITE};text-align:center;letter-spacing:-0.5px;">Reset your password 🔑</h1>
