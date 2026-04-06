@@ -587,12 +587,21 @@ export default function Home() {
             href="https://wa.me/263719647303"
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-3 px-10 py-4 rounded-2xl text-base font-bold text-white transition-all duration-300 hover:scale-105"
-            style={{ background: "linear-gradient(135deg, #25d366 0%, #128c7e 100%)", boxShadow: "0 8px 36px rgba(37,211,102,0.45), 0 0 60px rgba(37,211,102,0.15)" }}
+            className="group inline-flex items-center gap-3 px-10 py-4 rounded-2xl text-base font-semibold text-white transition-all duration-300 hover:scale-[1.02]"
+            style={{
+              background: "rgba(255,255,255,0.06)",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 2px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.08)",
+              backdropFilter: "blur(12px)",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.09)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(37,211,102,0.35)"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.06)"; (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.12)"; }}
           >
-            <MessageCircle size={20} />
+            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#25d366" }}>
+              <MessageCircle size={13} className="text-white" />
+            </div>
             Start Chatting on WhatsApp
-            <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            <ChevronRight size={16} style={{ color: "rgba(255,255,255,0.4)" }} className="group-hover:translate-x-1 group-hover:text-white transition-all" />
           </a>
           <p className="mt-5 text-sm" style={{ color: "rgba(255,255,255,0.3)" }}>
             Free · No download · Works on any phone · Created by{" "}
