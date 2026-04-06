@@ -1,62 +1,177 @@
 import { Router } from "express";
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { connectDB } from "../lib/mongo";
 import { User } from "../models/User";
 import { signToken } from "../lib/jwt";
-import { sendVerificationEmail, sendPasswordResetEmail } from "../lib/email";
+import { sendMagicLinkEmail, sendPasswordResetEmail } from "../lib/email";
 import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
+
+const APP_URL = process.env["APP_URL"] ||
+  (process.env["REPLIT_DEV_DOMAIN"]
+    ? `https://${process.env["REPLIT_DEV_DOMAIN"]}`
+    : "https://fundoai.gleeze.com");
 
 function makeCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-// ── POST /api/auth/signup ─────────────────────────────────────────────────────
+function makeMagicToken() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+// ── POST /api/auth/magic ──────────────────────────────────────────────────────
+// Unified: signup OR login — just send a magic link
+router.post("/magic", async (req, res) => {
+  try {
+    await connectDB();
+    const { email, name } = req.body;
+    if (!email) { res.status(400).json({ error: "Email is required" }); return; }
+
+    let user = await User.findOne({ email: email.toLowerCase().trim() });
+    let isNew = false;
+
+    if (!user) {
+      // New user — name required
+      if (!name || !name.trim()) {
+        res.status(400).json({ error: "Please enter your name to create an account", needsName: true });
+        return;
+      }
+      user = await User.create({ name: name.trim(), email: email.toLowerCase().trim() });
+      isNew = true;
+    } else if (!user.isVerified) {
+      // Existing unverified — treat as new so they see "complete signup"
+      if (name) user.pendingName = name.trim();
+      isNew = true;
+    }
+
+    // Generate token
+    const token = makeMagicToken();
+    user.magicToken = token;
+    user.magicTokenExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
+    await user.save();
+
+    const link = `${APP_URL}/auth/verify?token=${token}`;
+    await sendMagicLinkEmail(email, user.pendingName || user.name, link, isNew);
+
+    res.json({ message: "Magic link sent", isNew });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message || "Failed to send magic link" });
+  }
+});
+
+// ── GET /api/auth/magic/verify ────────────────────────────────────────────────
+router.get("/magic/verify", async (req, res) => {
+  try {
+    await connectDB();
+    const { token } = req.query;
+    if (!token || typeof token !== "string") {
+      res.status(400).json({ error: "Invalid or missing token" }); return;
+    }
+
+    const user = await User.findOne({
+      magicToken: token,
+      magicTokenExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      res.status(400).json({ error: "This link has expired or already been used. Please request a new one." });
+      return;
+    }
+
+    // Activate account
+    if (user.pendingName) {
+      user.name = user.pendingName;
+      user.pendingName = null;
+    }
+    user.isVerified = true;
+    user.magicToken = null;
+    user.magicTokenExpires = null;
+    await user.save();
+
+    const jwt = signToken(String(user._id));
+    res.json({ token: jwt, user: { id: user._id, name: user.name, email: user.email, level: user.level } });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/auth/login (password fallback — kept for existing users) ────────
+router.post("/login", async (req, res) => {
+  try {
+    await connectDB();
+    const { email, password } = req.body;
+    if (!email || !password) { res.status(400).json({ error: "Email and password required" }); return; }
+    const user = await User.findOne({ email });
+    if (!user || !user.password) { res.status(401).json({ error: "Invalid email or password" }); return; }
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) { res.status(401).json({ error: "Invalid email or password" }); return; }
+    if (!user.isVerified) {
+      res.status(403).json({ error: "Please verify your email first", needsVerification: true, email });
+      return;
+    }
+    const token = signToken(String(user._id));
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, level: user.level } });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── POST /api/auth/signup (legacy — kept for backward compat) ─────────────────
 router.post("/signup", async (req, res) => {
   try {
     await connectDB();
     const { name, email, password } = req.body;
-    if (!name || !email || !password) {
-      res.status(400).json({ error: "All fields required" });
-      return;
+    if (!name || !email) { res.status(400).json({ error: "Name and email required" }); return; }
+
+    let user = await User.findOne({ email });
+    if (user && user.isVerified) {
+      res.status(409).json({ error: "Email already registered. Use magic link to sign in." }); return;
     }
-    if (password.length < 6) {
-      res.status(400).json({ error: "Password must be at least 6 characters" });
-      return;
+
+    const token = makeMagicToken();
+    const expires = new Date(Date.now() + 15 * 60 * 1000);
+
+    if (user) {
+      user.magicToken = token;
+      user.magicTokenExpires = expires;
+      if (password) user.password = await bcrypt.hash(password, 12);
+      await user.save();
+    } else {
+      user = await User.create({
+        name, email,
+        password: password ? await bcrypt.hash(password, 12) : "",
+        magicToken: token, magicTokenExpires: expires,
+      });
     }
-    const existing = await User.findOne({ email });
-    if (existing) {
-      res.status(409).json({ error: "Email already registered" });
-      return;
-    }
-    const hashed = await bcrypt.hash(password, 12);
-    const code = makeCode();
-    const expires = new Date(Date.now() + 10 * 60 * 1000);
-    const user = await User.create({
-      name, email, password: hashed,
-      verifyCode: code, verifyExpires: expires,
-    });
-    await sendVerificationEmail(email, name, code);
-    res.json({ message: "Verification code sent", userId: user._id });
+
+    const link = `${APP_URL}/auth/verify?token=${token}`;
+    await sendMagicLinkEmail(email, name, link, true);
+    res.json({ message: "Magic link sent" });
   } catch (err: any) {
     res.status(500).json({ error: err.message || "Signup failed" });
   }
 });
 
-// ── POST /api/auth/verify-email ───────────────────────────────────────────────
+// ── POST /api/auth/verify-email (legacy OTP — kept for compatibility) ─────────
 router.post("/verify-email", async (req, res) => {
   try {
     await connectDB();
     const { email, code } = req.body;
     const user = await User.findOne({ email });
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
-    if (user.isVerified) { res.json({ message: "Already verified" }); return; }
+    if (user.isVerified) {
+      const token = signToken(String(user._id));
+      res.json({ message: "Already verified", token, user: { id: user._id, name: user.name, email: user.email, level: user.level } });
+      return;
+    }
     if (!user.verifyCode || user.verifyCode !== code) {
       res.status(400).json({ error: "Invalid code" }); return;
     }
     if (user.verifyExpires && user.verifyExpires < new Date()) {
-      res.status(400).json({ error: "Code expired. Please request a new one." }); return;
+      res.status(400).json({ error: "Code expired. Please request a new magic link." }); return;
     }
     user.isVerified = true;
     user.verifyCode = null;
@@ -76,34 +191,13 @@ router.post("/resend-code", async (req, res) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
     if (!user) { res.status(404).json({ error: "User not found" }); return; }
-    if (user.isVerified) { res.json({ message: "Already verified" }); return; }
-    const code = makeCode();
-    user.verifyCode = code;
-    user.verifyExpires = new Date(Date.now() + 10 * 60 * 1000);
+    const token = makeMagicToken();
+    user.magicToken = token;
+    user.magicTokenExpires = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
-    await sendVerificationEmail(email, user.name, code);
-    res.json({ message: "New code sent" });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ── POST /api/auth/login ──────────────────────────────────────────────────────
-router.post("/login", async (req, res) => {
-  try {
-    await connectDB();
-    const { email, password } = req.body;
-    if (!email || !password) { res.status(400).json({ error: "Email and password required" }); return; }
-    const user = await User.findOne({ email });
-    if (!user) { res.status(401).json({ error: "Invalid email or password" }); return; }
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) { res.status(401).json({ error: "Invalid email or password" }); return; }
-    if (!user.isVerified) {
-      res.status(403).json({ error: "Please verify your email first", needsVerification: true, email });
-      return;
-    }
-    const token = signToken(String(user._id));
-    res.json({ token, user: { id: user._id, name: user.name, email: user.email, level: user.level } });
+    const link = `${APP_URL}/auth/verify?token=${token}`;
+    await sendMagicLinkEmail(email, user.name, link, !user.isVerified);
+    res.json({ message: "New magic link sent" });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -115,25 +209,27 @@ router.post("/forgot-password", async (req, res) => {
     await connectDB();
     const { email } = req.body;
     const user = await User.findOne({ email });
-    if (!user) { res.json({ message: "If that email exists, a code was sent" }); return; }
-    const code = makeCode();
-    user.resetCode = code;
-    user.resetExpires = new Date(Date.now() + 10 * 60 * 1000);
+    if (!user) { res.json({ message: "If that email exists, a link was sent" }); return; }
+
+    // Send magic link instead of OTP (simpler UX)
+    const token = makeMagicToken();
+    user.magicToken = token;
+    user.magicTokenExpires = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
-    await sendPasswordResetEmail(email, user.name, code);
-    res.json({ message: "Reset code sent" });
+    const link = `${APP_URL}/auth/verify?token=${token}`;
+    await sendMagicLinkEmail(email, user.name, link, false);
+    res.json({ message: "Sign-in link sent" });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── POST /api/auth/reset-password ────────────────────────────────────────────
+// ── POST /api/auth/reset-password (legacy) ────────────────────────────────────
 router.post("/reset-password", async (req, res) => {
   try {
     await connectDB();
     const { email, code, newPassword } = req.body;
     if (!email || !code || !newPassword) { res.status(400).json({ error: "All fields required" }); return; }
-    if (newPassword.length < 6) { res.status(400).json({ error: "Password must be at least 6 characters" }); return; }
     const user = await User.findOne({ email });
     if (!user || !user.resetCode || user.resetCode !== code) {
       res.status(400).json({ error: "Invalid or expired code" }); return;

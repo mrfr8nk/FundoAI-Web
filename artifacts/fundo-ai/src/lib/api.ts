@@ -23,8 +23,14 @@ async function request(path: string, opts: RequestInit = {}) {
 }
 
 export const api = {
-  // Auth
-  signup: (body: { name: string; email: string; password: string }) =>
+  // Auth — magic link (primary)
+  requestMagicLink: (body: { email: string; name?: string }) =>
+    request("/auth/magic", { method: "POST", body: JSON.stringify(body) }),
+  verifyMagicLink: (token: string) =>
+    request(`/auth/magic/verify?token=${encodeURIComponent(token)}`),
+
+  // Auth — legacy / fallback
+  signup: (body: { name: string; email: string; password?: string }) =>
     request("/auth/signup", { method: "POST", body: JSON.stringify(body) }),
   verifyEmail: (body: { email: string; code: string }) =>
     request("/auth/verify-email", { method: "POST", body: JSON.stringify(body) }),
