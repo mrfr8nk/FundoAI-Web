@@ -36,8 +36,8 @@ app.use("/api", router);
 if (fs.existsSync(FRONTEND_DIST)) {
   logger.info({ FRONTEND_DIST }, "Serving frontend static files");
   app.use(express.static(FRONTEND_DIST));
-  // For any route that isn't /api/*, send the React app
-  app.get("*", (_req, res) => {
+  // For any route that isn't /api/*, send the React app (Express 5 requires regex for catch-all)
+  app.get(/.*/, (_req, res) => {
     res.sendFile(path.join(FRONTEND_DIST, "index.html"));
   });
 } else {
