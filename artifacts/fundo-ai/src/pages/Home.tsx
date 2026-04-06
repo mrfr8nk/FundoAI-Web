@@ -7,6 +7,8 @@ import {
   PenTool, Camera, Headphones, Database, Wifi, Heart,
   Trophy, Target, Rocket, Moon, Sun, Flame, Leaf, Award,
   CheckCircle2, TrendingUp, Cpu, ImageIcon, Volume2,
+  Menu, X, ExternalLink, Mail, Phone, MapPin, ArrowUpRight,
+  Twitter, Youtube, Instagram, Linkedin,
 } from "lucide-react";
 
 /* ─── Scroll-reveal hook ─── */
@@ -360,8 +362,15 @@ function ChatDemo() {
 /* ═══════════════════════════════════════════ MAIN PAGE ═══════════════════════════════════════════ */
 export default function Home() {
   const [mounted, setMounted] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: "linear-gradient(135deg, #080511 0%, #050a14 50%, #09091a 100%)" }}>
@@ -411,34 +420,133 @@ export default function Home() {
       {/* ── Grid ── */}
       <div className="absolute inset-0 opacity-[0.025] pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
 
+      {/* ════════════════════════════════ ANNOUNCEMENT BAR ════════════════════════════════ */}
+      <div className="relative z-50 text-center py-2 px-4 text-xs font-semibold" style={{ background: "linear-gradient(90deg, rgba(37,211,102,0.15), rgba(168,85,247,0.15), rgba(6,182,212,0.15))", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+        <span style={{ color: "rgba(255,255,255,0.6)" }}>🎓 Now available on WhatsApp for all Zimbabwean students · </span>
+        <a href="https://wa.me/263719647303" target="_blank" rel="noopener noreferrer" className="font-bold underline underline-offset-2 transition-colors duration-200" style={{ color: "#25d366" }}>
+          Start free today →
+        </a>
+      </div>
+
       {/* ════════════════════════════════ NAVBAR ════════════════════════════════ */}
-      <nav className="glass sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #a855f7, #7c3aed)", boxShadow: "0 0 20px rgba(168,85,247,0.45)" }}>
-              <Bot size={20} className="text-white" />
+      <nav
+        className="sticky top-0 z-50 transition-all duration-300"
+        style={{
+          background: scrolled ? "rgba(8,5,17,0.92)" : "rgba(8,5,17,0.4)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          borderBottom: scrolled ? "1px solid rgba(255,255,255,0.08)" : "1px solid transparent",
+          boxShadow: scrolled ? "0 4px 32px rgba(0,0,0,0.4)" : "none",
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-6">
+          {/* Main nav row */}
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <a href="#" className="flex items-center gap-3 group">
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform duration-300 group-hover:scale-110"
+                style={{ background: "linear-gradient(135deg, #a855f7, #7c3aed)", boxShadow: "0 0 16px rgba(168,85,247,0.5)" }}
+              >
+                <Bot size={18} className="text-white" />
+              </div>
+              <div>
+                <span
+                  className="text-lg font-black tracking-tight leading-none block"
+                  style={{ background: "linear-gradient(135deg, #a855f7, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+                >
+                  FUNDO AI
+                </span>
+                <span className="text-[9px] font-semibold uppercase tracking-widest leading-none block" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  Zimbabwe's AI
+                </span>
+              </div>
+            </a>
+
+            {/* Desktop nav links */}
+            <div className="hidden md:flex items-center gap-1">
+              {[
+                { label: "Features", href: "#features" },
+                { label: "How It Works", href: "#how" },
+                { label: "Demo", href: "#demo" },
+              ].map(({ label, href }) => (
+                <a
+                  key={label}
+                  href={href}
+                  className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative group"
+                  style={{ color: "rgba(255,255,255,0.55)" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; (e.currentTarget.style as any).background = "rgba(255,255,255,0.06)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.55)"; (e.currentTarget.style as any).background = "transparent"; }}
+                >
+                  {label}
+                </a>
+              ))}
             </div>
-            <span className="text-xl font-black tracking-tight" style={{ background: "linear-gradient(135deg, #a855f7, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              FUNDO AI
-            </span>
-          </div>
-          <div className="hidden md:flex items-center gap-8">
-            {[["Features", "#features"], ["How It Works", "#how"], ["Contact", "https://wa.me/263719647303"]].map(([label, href]) => (
-              <a key={label} href={href} className="text-sm font-medium transition-colors duration-200" style={{ color: "rgba(255,255,255,0.55)" }} onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; }} onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.55)"; }}>
-                {label}
+
+            {/* Right side */}
+            <div className="flex items-center gap-3">
+              {/* Tagline pill — desktop only */}
+              <div className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium" style={{ background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.2)", color: "#25d366" }}>
+                <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                Free to use
+              </div>
+
+              {/* CTA */}
+              <a
+                href="https://wa.me/263719647303"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-300 hover:scale-105 hover:brightness-110"
+                style={{ background: "linear-gradient(135deg, #25d366, #128c7e)", boxShadow: "0 4px 16px rgba(37,211,102,0.35)" }}
+              >
+                <MessageCircle size={14} />
+                Chat Now
               </a>
-            ))}
+
+              {/* Mobile toggle */}
+              <button
+                onClick={() => setMobileOpen((o) => !o)}
+                className="md:hidden flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200"
+                style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
+              >
+                {mobileOpen ? <X size={18} className="text-white" /> : <Menu size={18} className="text-white" />}
+              </button>
+            </div>
           </div>
-          <a
-            href="https://wa.me/263719647303"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-300 hover:scale-105"
-            style={{ background: "linear-gradient(135deg, #25d366, #128c7e)", boxShadow: "0 4px 16px rgba(37,211,102,0.35)" }}
-          >
-            <MessageCircle size={15} />
-            Chat Now
-          </a>
+
+          {/* Mobile dropdown */}
+          {mobileOpen && (
+            <div className="md:hidden pb-4 pt-2 space-y-1" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+              {[
+                { label: "Features", href: "#features" },
+                { label: "How It Works", href: "#how" },
+                { label: "Demo", href: "#demo" },
+              ].map(({ label, href }) => (
+                <a
+                  key={label}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200"
+                  style={{ color: "rgba(255,255,255,0.7)" }}
+                  onMouseEnter={(e) => { (e.currentTarget.style as any).background = "rgba(255,255,255,0.05)"; }}
+                  onMouseLeave={(e) => { (e.currentTarget.style as any).background = "transparent"; }}
+                >
+                  {label}
+                  <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.3)" }} />
+                </a>
+              ))}
+              <a
+                href="https://wa.me/263719647303"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold text-white mt-2"
+                style={{ background: "linear-gradient(135deg, #25d366, #128c7e)" }}
+              >
+                <MessageCircle size={15} />
+                Chat Now on WhatsApp
+              </a>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -567,7 +675,7 @@ export default function Home() {
       </section>
 
       {/* ════════════════════════════════ AI DEMO ════════════════════════════════ */}
-      <section className="relative z-10 py-20 px-6">
+      <section id="demo" className="relative z-10 py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <Reveal direction="left">
@@ -694,24 +802,208 @@ export default function Home() {
       </section>
 
       {/* ════════════════════════════════ FOOTER ════════════════════════════════ */}
-      <footer className="relative z-10 glass py-10 px-6 mt-8">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #a855f7, #7c3aed)" }}>
-              <Bot size={18} className="text-white" />
-            </div>
-            <div>
-              <div className="font-black text-base" style={{ background: "linear-gradient(135deg, #a855f7, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>FUNDO AI</div>
-              <div className="text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>fundoai.gleeze.com</div>
+      <footer className="relative z-10 mt-16" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        {/* Top gradient line */}
+        <div className="h-px w-full" style={{ background: "linear-gradient(90deg, transparent, rgba(168,85,247,0.5), rgba(6,182,212,0.5), transparent)" }} />
+
+        {/* Main footer body */}
+        <div
+          style={{
+            background: "linear-gradient(180deg, rgba(8,5,17,0.6) 0%, rgba(5,4,12,0.95) 100%)",
+            backdropFilter: "blur(32px)",
+            WebkitBackdropFilter: "blur(32px)",
+          }}
+        >
+          {/* Upper section */}
+          <div className="max-w-7xl mx-auto px-6 py-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+
+              {/* Brand column */}
+              <div className="lg:col-span-2">
+                <div className="flex items-center gap-3 mb-5">
+                  <div
+                    className="w-11 h-11 rounded-xl flex items-center justify-center"
+                    style={{ background: "linear-gradient(135deg, #a855f7, #7c3aed)", boxShadow: "0 0 20px rgba(168,85,247,0.4)" }}
+                  >
+                    <Bot size={22} className="text-white" />
+                  </div>
+                  <div>
+                    <div
+                      className="text-xl font-black tracking-tight leading-none"
+                      style={{ background: "linear-gradient(135deg, #a855f7, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+                    >
+                      FUNDO AI
+                    </div>
+                    <div className="text-[10px] font-semibold uppercase tracking-widest mt-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+                      Zimbabwe's AI Assistant
+                    </div>
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed mb-6 max-w-sm" style={{ color: "rgba(255,255,255,0.45)" }}>
+                  A powerful, intelligent AI agent built for Zimbabwean students. Helping learners from Grade 1 to A-Level reach their full potential — available 24/7 on WhatsApp.
+                </p>
+                {/* Trust badges */}
+                <div className="flex flex-wrap gap-3 mb-6">
+                  {[
+                    { icon: Shield, text: "Safe & Private", color: "#25d366" },
+                    { icon: Clock, text: "24/7 Available", color: "#06b6d4" },
+                    { icon: GraduationCap, text: "ZIMSEC Aligned", color: "#a855f7" },
+                  ].map(({ icon: Icon, text, color }) => (
+                    <div
+                      key={text}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+                      style={{ background: `${color}12`, border: `1px solid ${color}28`, color: "rgba(255,255,255,0.6)" }}
+                    >
+                      <Icon size={11} style={{ color }} />
+                      {text}
+                    </div>
+                  ))}
+                </div>
+                {/* WhatsApp CTA */}
+                <a
+                  href="https://wa.me/263719647303"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all duration-300 hover:scale-105 hover:brightness-110"
+                  style={{ background: "linear-gradient(135deg, #25d366, #128c7e)", boxShadow: "0 4px 20px rgba(37,211,102,0.35)" }}
+                >
+                  <MessageCircle size={15} />
+                  Open WhatsApp Chat
+                  <ArrowUpRight size={13} />
+                </a>
+              </div>
+
+              {/* Quick links */}
+              <div>
+                <h4 className="text-sm font-bold text-white mb-5 uppercase tracking-widest" style={{ letterSpacing: "0.12em" }}>
+                  Navigate
+                </h4>
+                <ul className="space-y-3">
+                  {[
+                    { label: "Features", href: "#features" },
+                    { label: "How It Works", href: "#how" },
+                    { label: "Live Demo", href: "#demo" },
+                    { label: "About FUNDO AI", href: "#" },
+                    { label: "Creator — Darrell Mucheri", href: "#" },
+                  ].map(({ label, href }) => (
+                    <li key={label}>
+                      <a
+                        href={href}
+                        className="flex items-center gap-2 text-sm transition-all duration-200 group"
+                        style={{ color: "rgba(255,255,255,0.45)" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.color = "#fff"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.45)"; }}
+                      >
+                        <ChevronRight size={13} className="opacity-0 group-hover:opacity-100 transition-opacity -ml-4 group-hover:ml-0 duration-200" style={{ color: "#a855f7" }} />
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Contact column */}
+              <div>
+                <h4 className="text-sm font-bold text-white mb-5 uppercase tracking-widest" style={{ letterSpacing: "0.12em" }}>
+                  Contact
+                </h4>
+                <ul className="space-y-4">
+                  <li>
+                    <a
+                      href="https://wa.me/263719647303"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-3 group transition-all duration-200"
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(37,211,102,0.12)", border: "1px solid rgba(37,211,102,0.2)" }}>
+                        <MessageCircle size={14} style={{ color: "#25d366" }} />
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold mb-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>WhatsApp</div>
+                        <div className="text-sm font-medium transition-colors duration-200" style={{ color: "rgba(255,255,255,0.7)" }}
+                          onMouseEnter={(e: any) => { e.target.style.color = "#25d366"; }}
+                          onMouseLeave={(e: any) => { e.target.style.color = "rgba(255,255,255,0.7)"; }}
+                        >+263 719 647 303</div>
+                      </div>
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="https://fundoai.gleeze.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-3 group"
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(6,182,212,0.12)", border: "1px solid rgba(6,182,212,0.2)" }}>
+                        <Globe size={14} style={{ color: "#06b6d4" }} />
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold mb-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>Website</div>
+                        <div className="text-sm font-medium transition-colors duration-200" style={{ color: "rgba(255,255,255,0.7)" }}
+                          onMouseEnter={(e: any) => { e.target.style.color = "#06b6d4"; }}
+                          onMouseLeave={(e: any) => { e.target.style.color = "rgba(255,255,255,0.7)"; }}
+                        >fundoai.gleeze.com</div>
+                      </div>
+                    </a>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(168,85,247,0.12)", border: "1px solid rgba(168,85,247,0.2)" }}>
+                      <MapPin size={14} style={{ color: "#a855f7" }} />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold mb-0.5" style={{ color: "rgba(255,255,255,0.4)" }}>Based in</div>
+                      <div className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>Zimbabwe 🇿🇼</div>
+                    </div>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Shield size={13} style={{ color: "#25d366" }} />
-            <span className="text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>Safe, private, and powered by advanced AI</span>
+
+          {/* Divider */}
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)" }} />
           </div>
-          <div className="text-xs text-center md:text-right" style={{ color: "rgba(255,255,255,0.3)" }}>
-            <div>Created with ❤️ by <span className="font-semibold" style={{ color: "#a855f7" }}>Darrell Mucheri</span> 🇿🇼</div>
-            <div className="mt-1">© 2025 FUNDO AI · All rights reserved</div>
+
+          {/* Bottom bar */}
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              {/* Left */}
+              <div className="flex items-center gap-2 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
+                <span>© 2025 FUNDO AI</span>
+                <span style={{ color: "rgba(255,255,255,0.12)" }}>·</span>
+                <span>All rights reserved</span>
+                <span style={{ color: "rgba(255,255,255,0.12)" }}>·</span>
+                <span>
+                  Built by{" "}
+                  <span className="font-semibold" style={{ color: "#a855f7" }}>Darrell Mucheri</span>
+                </span>
+              </div>
+
+              {/* Center — Made in Zimbabwe badge */}
+              <div
+                className="flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold"
+                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.4)" }}
+              >
+                <span>🇿🇼</span>
+                <span>Made in Zimbabwe with ❤️</span>
+              </div>
+
+              {/* Right — legal links */}
+              <div className="flex items-center gap-4 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
+                {["Privacy Policy", "Terms of Use"].map((l) => (
+                  <a
+                    key={l}
+                    href="#"
+                    className="transition-colors duration-200"
+                    onMouseEnter={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.7)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.3)"; }}
+                  >
+                    {l}
+                  </a>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </footer>
