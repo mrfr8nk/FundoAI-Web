@@ -9,10 +9,7 @@ import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
-const APP_URL = process.env["APP_URL"] ||
-  (process.env["REPLIT_DEV_DOMAIN"]
-    ? `https://${process.env["REPLIT_DEV_DOMAIN"]}`
-    : "https://fundoai.gleeze.com");
+const APP_URL = process.env["APP_URL"] || "https://fundoai.gleeze.com";
 
 function makeCode() {
   return String(Math.floor(100000 + Math.random() * 900000));

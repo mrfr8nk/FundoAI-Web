@@ -47,10 +47,25 @@ export const api = {
     request("/auth/profile", { method: "PATCH", body: JSON.stringify(body) }),
 
   // AI
-  chat: (message: string) =>
-    request("/ai/chat", { method: "POST", body: JSON.stringify({ message }) }),
-  chatGuest: (message: string, sessionHistory: Array<{ role: string; content: string }>) =>
-    request("/ai/chat/guest", { method: "POST", body: JSON.stringify({ message, sessionHistory }) }),
+  chat: (message: string, imageBase64?: string) =>
+    request("/ai/chat", { method: "POST", body: JSON.stringify({ message, imageBase64 }) }),
+  chatGuest: (message: string, sessionHistory: Array<{ role: string; content: string }>, imageBase64?: string) =>
+    request("/ai/chat/guest", { method: "POST", body: JSON.stringify({ message, sessionHistory, imageBase64 }) }),
   getHistory: () => request("/ai/history"),
   clearHistory: () => request("/ai/history", { method: "DELETE" }),
+
+  // File upload
+  uploadFile: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "");
+    const res = await fetch(`${BASE}/api/ai/upload`, {
+      method: "POST",
+      headers: { ...(localStorage.getItem("fundo_token") ? { Authorization: `Bearer ${localStorage.getItem("fundo_token")}` } : {}) },
+      body: formData,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Upload failed");
+    return data;
+  },
 };

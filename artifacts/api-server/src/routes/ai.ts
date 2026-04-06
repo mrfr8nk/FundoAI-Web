@@ -1,8 +1,16 @@
 import { Router } from "express";
 import axios from "axios";
+import multer from "multer";
+import { createRequire } from "node:module";
 import { requireAuth } from "../middlewares/auth";
 import { User } from "../models/User";
 import { connectDB } from "../lib/mongo";
+
+const _req = createRequire(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const pdfParse: (buf: Buffer, opts?: any) => Promise<{ text: string; numpages: number }> = _req("pdf-parse");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mammoth: { extractRawText: (opts: { buffer: Buffer }) => Promise<{ value: string }> } = _req("mammoth");
 
 const router = Router();
 
@@ -36,6 +44,11 @@ MATH:
 • Show full step-by-step working
 • Use Unicode symbols: ² ³ √ π θ α β ± × ÷ ∞ ≤ ≥ ≠
 
+FILES & DOCUMENTS:
+• When given PDF, Word, or image text content — analyse it thoroughly
+• Summarise, answer questions about it, or help the student understand it
+• Reference specific parts of the document in your answers
+
 FORMATTING (for web):
 • Use clear paragraphs and line breaks
 • Use bullet points with •
@@ -45,7 +58,6 @@ FORMATTING (for web):
 const SEARCH_TRIGGERS = /\b(today|weather|temperature|forecast|time in|clock in|current time|latest|breaking|news|just announced|this week|current president|recent results|live score|stock price|election|2025|2026)\b/i;
 
 async function webSearch(query: string): Promise<string | null> {
-  // Weather
   const weatherM = query.match(/weather\s+(?:in\s+|for\s+)?(.+?)(?:\s*\?|$)/i);
   if (weatherM || /\bweather\b/i.test(query)) {
     try {
@@ -58,7 +70,6 @@ async function webSearch(query: string): Promise<string | null> {
     } catch { /* ignore */ }
   }
 
-  // Time
   const timeM = query.match(/(?:time|clock|date)\s+(?:in|at)\s+(.+?)(?:\?|$)/i);
   if (timeM) {
     try {
@@ -78,7 +89,6 @@ async function webSearch(query: string): Promise<string | null> {
     } catch { /* ignore */ }
   }
 
-  // Tavily for news/current events
   try {
     const tv = await axios.post("https://api.tavily.com/search", {
       api_key: TAVILY_KEY, query, search_depth: "advanced", max_results: 3,
@@ -91,7 +101,6 @@ async function webSearch(query: string): Promise<string | null> {
     }
   } catch { /* ignore */ }
 
-  // DuckDuckGo fallback
   try {
     const res = await axios.get("https://api.duckduckgo.com/", {
       params: { q: query, format: "json", no_html: 1, skip_disambig: 1 }, timeout: 8000,
@@ -104,8 +113,12 @@ async function webSearch(query: string): Promise<string | null> {
   } catch { return null; }
 }
 
-async function askAI(message: string, history: Array<{ role: string; content: string }>, userId: string): Promise<string> {
-  // Build context
+async function askAI(
+  message: string,
+  history: Array<{ role: string; content: string }>,
+  _userId: string,
+  imageBase64?: string,
+): Promise<string> {
   const historyText = history.slice(-10).map(h => `${h.role === "user" ? "Student" : "FUNDO AI"}: ${h.content}`).join("\n");
   let enriched = message;
 
@@ -115,13 +128,20 @@ async function askAI(message: string, history: Array<{ role: string; content: st
   }
 
   const q = historyText ? `${historyText}\nStudent: ${enriched}` : enriched;
-  const sysTrimmed = SYSTEM_PROMPT.substring(0, 1200);
+  const sysTrimmed = SYSTEM_PROMPT.substring(0, 1500);
+
+  const params: Record<string, string> = {
+    BK9: sysTrimmed,
+    q: q.substring(0, 5000),
+    model: BK9_MODEL,
+  };
+  if (imageBase64) params["image"] = imageBase64;
 
   try {
     const res = await axios({
       method: "post",
       url: "https://api.bk9.dev/ai/BK94",
-      data: new URLSearchParams({ BK9: sysTrimmed, q: q.substring(0, 4000), model: BK9_MODEL }).toString(),
+      data: new URLSearchParams(params).toString(),
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       timeout: 35000,
     });
@@ -136,24 +156,95 @@ async function askAI(message: string, history: Array<{ role: string; content: st
   throw new Error("AI service unavailable");
 }
 
+// ── Multer — memory storage (no disk) ────────────────────────────────────────
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB max
+  fileFilter: (_req, file, cb) => {
+    const allowed = [
+      "image/jpeg", "image/png", "image/gif", "image/webp",
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/msword",
+    ];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error("Unsupported file type. Allowed: images, PDF, Word documents."));
+  },
+});
+
+// ── POST /api/ai/upload ───────────────────────────────────────────────────────
+router.post("/upload", upload.single("file"), async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) { res.status(400).json({ error: "No file uploaded" }); return; }
+
+    const { originalname, mimetype, buffer } = file;
+    const isImage = mimetype.startsWith("image/");
+    const isPDF   = mimetype === "application/pdf";
+    const isWord  = mimetype.includes("wordprocessingml") || mimetype === "application/msword";
+
+    if (isImage) {
+      const b64 = buffer.toString("base64");
+      const dataUrl = `data:${mimetype};base64,${b64}`;
+      res.json({
+        type: "image",
+        name: originalname,
+        dataUrl,
+        base64: b64,
+        mimeType: mimetype,
+        preview: dataUrl,
+      });
+      return;
+    }
+
+    if (isPDF) {
+      let text = "";
+      try {
+        const parsed = await pdfParse(buffer);
+        text = parsed.text?.trim() || "";
+      } catch (e: any) {
+        res.status(500).json({ error: "Could not parse PDF: " + e.message }); return;
+      }
+      const snippet = text.substring(0, 6000);
+      res.json({ type: "pdf", name: originalname, text: snippet, charCount: text.length });
+      return;
+    }
+
+    if (isWord) {
+      let text = "";
+      try {
+        const result = await mammoth.extractRawText({ buffer });
+        text = result.value?.trim() || "";
+      } catch (e: any) {
+        res.status(500).json({ error: "Could not parse Word document: " + e.message }); return;
+      }
+      const snippet = text.substring(0, 6000);
+      res.json({ type: "word", name: originalname, text: snippet, charCount: text.length });
+      return;
+    }
+
+    res.status(400).json({ error: "Unsupported file type" });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // ── POST /api/ai/chat ─────────────────────────────────────────────────────────
 router.post("/chat", requireAuth, async (req, res) => {
   try {
     await connectDB();
     const user = (req as any).user;
-    const { message } = req.body;
+    const { message, imageBase64 } = req.body;
     if (!message?.trim()) { res.status(400).json({ error: "Message required" }); return; }
 
-    // Reload full user with chatHistory
     const fullUser = await User.findById(user._id);
     if (!fullUser) { res.status(404).json({ error: "User not found" }); return; }
 
     const history = fullUser.chatHistory.slice(-20).map(h => ({ role: h.role, content: h.content }));
-    const reply = await askAI(message, history, String(fullUser._id));
+    const reply = await askAI(message, history, String(fullUser._id), imageBase64);
 
-    // Save to history
-    fullUser.chatHistory.push({ role: "user", content: message.substring(0, 800), ts: Date.now() });
-    fullUser.chatHistory.push({ role: "assistant", content: reply.substring(0, 800), ts: Date.now() });
+    fullUser.chatHistory.push({ role: "user", content: message.substring(0, 1200), ts: Date.now() });
+    fullUser.chatHistory.push({ role: "assistant", content: reply.substring(0, 1200), ts: Date.now() });
     if (fullUser.chatHistory.length > 60) fullUser.chatHistory = fullUser.chatHistory.slice(-60);
     await fullUser.save();
 
@@ -164,13 +255,12 @@ router.post("/chat", requireAuth, async (req, res) => {
 });
 
 // ── POST /api/ai/chat/guest ───────────────────────────────────────────────────
-// Limited guest chat (no history persistence, 3 message session)
 router.post("/chat/guest", async (req, res) => {
   try {
-    const { message, sessionHistory } = req.body;
+    const { message, sessionHistory, imageBase64 } = req.body;
     if (!message?.trim()) { res.status(400).json({ error: "Message required" }); return; }
     const history = (sessionHistory || []).slice(-6);
-    const reply = await askAI(message, history, "guest");
+    const reply = await askAI(message, history, "guest", imageBase64);
     res.json({ reply });
   } catch (err: any) {
     res.status(500).json({ error: err.message || "AI error" });
