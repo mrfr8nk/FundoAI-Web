@@ -1,9 +1,9 @@
 # 🤖🔥 FUNDO AI — Web Platform
 
-> Zimbabwe's most advanced AI study assistant — web platform with full authentication, persistent AI chat, and ZIMSEC curriculum alignment.
+> Zimbabwe's most advanced AI study assistant — web platform with magic-link authentication, persistent AI chat, file uploads, and ZIMSEC curriculum alignment.
 
-[![Made in Zimbabwe](https://img.shields.io/badge/Made%20in-Zimbabwe%20🇿🇼-green)](https://fundoai.gleeze.com)
-[![AI Powered](https://img.shields.io/badge/AI-Llama%204%20Scout-purple)](https://fundoai.gleeze.com)
+[![Made in Zimbabwe](https://img.shields.io/badge/Made%20in-Zimbabwe%20🇿🇼-green)](https://github.com)
+[![AI Powered](https://img.shields.io/badge/AI-Llama%204%20Scout-purple)](https://bk9.dev)
 [![License](https://img.shields.io/badge/License-Proprietary-red)](./LICENSE)
 
 ---
@@ -18,7 +18,6 @@ This repository is a **pnpm monorepo** containing:
 |---|---|
 | `artifacts/fundo-ai` | React + Vite frontend (glassmorphism dark UI) |
 | `artifacts/api-server` | Express 5 backend (auth, AI chat, user management) |
-| `artifacts/mockup-sandbox` | Component preview server (canvas/design tooling) |
 
 ---
 
@@ -29,57 +28,148 @@ This repository is a **pnpm monorepo** containing:
 | **Frontend** | React 18 · Vite 7 · TypeScript · Tailwind CSS v4 · wouter |
 | **Backend** | Express 5 · TypeScript · esbuild · pino logging |
 | **Database** | MongoDB Atlas (Mongoose) |
-| **Auth** | JWT (30-day) · bcryptjs (12 rounds) · Nodemailer SMTP |
-| **AI** | BK9 API — Meta Llama 4 Scout 17B |
-| **Web Search** | Tavily (news/current events) · DuckDuckGo (general) |
+| **Auth** | Magic-link email (no passwords) · JWT 30-day sessions |
+| **AI** | BK9 API — Meta Llama 4 Scout 17B (vision + text) |
+| **File Uploads** | Images (base64 vision) · PDF (pdf-parse) · Word (mammoth) |
+| **Web Search** | Tavily · DuckDuckGo |
 | **Live Data** | wttr.in (weather) · worldtimeapi.org (time zones) |
-| **UI** | Lucide icons · Glassmorphism CSS · Custom keyframe animations |
 | **Package Manager** | pnpm workspaces |
 
 ---
 
 ## Features
 
-### Web Platform
-- Full glassmorphism dark design (purple / cyan palette)
-- Scroll-triggered reveal animations on every section
-- Animated floating AI orb with rotating conic gradient rings
-- Live icon scroll rows (32 icons, dual direction)
-- Animated AI chat demo cycling through 4 real scenarios
-- Count-up stats triggered on scroll
-- Sticky scroll-aware navbar · animated mobile hamburger menu
-- Multi-column footer with working route links
-
 ### Authentication
-- **Signup** with SMTP email verification (6-digit OTP, 10-min expiry)
-- **Login** with JWT token (30-day session)
-- **Forgot password** → reset code via email → new password
-- **Email verification** with OTP digit inputs, paste support, resend countdown
-- Branded HTML email templates (verification + password reset)
+- **No passwords** — users sign up or log in with just their email
+- A **magic link** is emailed and expires in 15 minutes
+- Click the link → auto-verified → redirected straight to chat
+- **5 free guest messages** before an account is required
+- JWT tokens stored in localStorage (30-day expiry)
+- Branded HTML email templates (signup vs. returning user variants)
 
 ### AI Chat
-- Powered by **Llama 4 Scout** via BK9 API
-- **Live web search** triggered automatically for current events, news, prices
-- **Weather** via wttr.in (any city)
+- Powered by **Llama 4 Scout** via BK9 API (vision + text model)
+- **File uploads**: images, PDFs, Word docs (up to 10 MB)
+- **Live web search** triggered automatically for current events/news
+- **Weather** via wttr.in (any city worldwide)
 - **Time zones** via worldtimeapi.org
-- Persistent chat history stored in MongoDB (authenticated users)
-- Guest mode (5 free messages, then account required)
-- Full markdown rendering with bullet points and bold support
-- Suggested starter questions · animated typing indicator
+- Persistent chat history sidebar grouped by date (Today, Yesterday, etc.)
+- Guest mode with countdown banner and GuestWall modal
+- Full markdown rendering · animated typing indicator
+- Suggested starter questions + capability badges
 
 ### Pages
+
 | Route | Description |
 |---|---|
 | `/` | Full glassmorphism landing page |
 | `/chat` | AI chat interface (guest + authenticated) |
-| `/login` | Login page |
-| `/signup` | Signup with perk pills + password strength meter |
-| `/verify-email` | 6-digit OTP verification |
-| `/forgot-password` | Forgot password flow |
-| `/reset-password` | Reset password with OTP |
+| `/login` | Magic-link login |
+| `/signup` | Magic-link signup with perk pills |
+| `/auth/verify` | Auto-verify magic link token from email |
 | `/about` | About page + creator profile |
 | `/privacy` | Privacy Policy |
 | `/terms` | Terms of Use |
+
+---
+
+## Environment Variables
+
+### API Server variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `MONGODB_URI` | ✅ | MongoDB Atlas connection string |
+| `JWT_SECRET` | ✅ | Random secret string for signing JWTs (min 32 chars) |
+| `SMTP_HOST` | ✅ | SMTP host — e.g. `smtp.gmail.com` |
+| `SMTP_PORT` | ✅ | SMTP port — `587` for Gmail TLS |
+| `SMTP_USER` | ✅ | Your Gmail address |
+| `SMTP_PASS` | ✅ | Gmail **App Password** (16 chars — NOT your regular password) |
+| `SMTP_FROM` | ✅ | Sender string — e.g. `FUNDO AI <noreply@fundoai.com>` |
+| `APP_URL` | ✅ | **Frontend URL** — magic links point here (e.g. `https://fundo-ai.onrender.com`) |
+| `BK9_MODEL` | — | AI model override (default: `meta-llama/llama-4-scout-17b-16e-instruct`) |
+| `SESSION_SECRET` | — | Express session secret (if sessions are added later) |
+
+> **`APP_URL` is the most important variable for magic links.** It must be set to where your **frontend** is deployed — not the API server URL. Magic links will be broken if this points to the wrong domain.
+
+> **Gmail App Password:** Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), enable 2-Step Verification if not already done, then generate an App Password for "Mail". Use the 16-character code as `SMTP_PASS`.
+
+### Frontend (build-time) variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `VITE_API_BASE_URL` | ✅ on Render | Full URL of your API server — e.g. `https://fundo-ai-api.onrender.com/api` |
+
+> On Render, the frontend and API are deployed as separate services with different URLs. You **must** set `VITE_API_BASE_URL` so the frontend knows where to send requests. In same-domain setups (Replit, nginx proxy), leave this unset and the relative `/api` path is used automatically.
+
+---
+
+## Deploy on Render
+
+Render hosts the API and frontend as **two separate services**. Follow these steps:
+
+### Step 1 — Deploy the API Server
+
+1. Go to [render.com](https://render.com) → **New → Web Service**
+2. Connect your GitHub repo
+3. Set:
+   - **Name:** `fundo-ai-api` (or anything you like)
+   - **Root Directory:** leave blank (monorepo root)
+   - **Build Command:** `npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build`
+   - **Start Command:** `pnpm --filter @workspace/api-server run start`
+   - **Instance Type:** Free (or Starter for always-on)
+4. Add these **Environment Variables** in the Render dashboard:
+
+   | Key | Value |
+   |---|---|
+   | `MONGODB_URI` | Your Atlas connection string |
+   | `JWT_SECRET` | Any long random string |
+   | `SMTP_HOST` | `smtp.gmail.com` |
+   | `SMTP_PORT` | `587` |
+   | `SMTP_USER` | your-gmail@gmail.com |
+   | `SMTP_PASS` | Your 16-char Gmail App Password |
+   | `SMTP_FROM` | `FUNDO AI <your-gmail@gmail.com>` |
+   | `APP_URL` | *(leave blank for now — fill in after Step 2)* |
+
+5. Click **Create Web Service** → wait for deploy → copy the URL (e.g. `https://fundo-ai-api.onrender.com`)
+
+---
+
+### Step 2 — Deploy the Frontend
+
+1. Go to [render.com](https://render.com) → **New → Static Site**
+2. Connect the same repo
+3. Set:
+   - **Name:** `fundo-ai`
+   - **Root Directory:** leave blank
+   - **Build Command:** `npm install -g pnpm && pnpm install && pnpm --filter @workspace/fundo-ai run build`
+   - **Publish Directory:** `artifacts/fundo-ai/dist`
+4. Add this **Environment Variable**:
+
+   | Key | Value |
+   |---|---|
+   | `VITE_API_BASE_URL` | `https://fundo-ai-api.onrender.com/api` *(your API URL + /api)* |
+
+5. Add a **Rewrite Rule** so React routing works (single-page app):
+   - **Source:** `/*`
+   - **Destination:** `/index.html`
+   - **Action:** Rewrite
+
+6. Click **Create Static Site** → copy your frontend URL (e.g. `https://fundo-ai.onrender.com`)
+
+---
+
+### Step 3 — Link them together
+
+Go back to your **API Server** service → **Environment** tab → add:
+
+| Key | Value |
+|---|---|
+| `APP_URL` | `https://fundo-ai.onrender.com` *(your frontend URL from Step 2)* |
+
+Click **Save Changes** — Render will redeploy automatically.
+
+**Done.** Your magic links will now point to `https://fundo-ai.onrender.com/auth/verify?token=...` and everything will work correctly.
 
 ---
 
@@ -90,25 +180,7 @@ This repository is a **pnpm monorepo** containing:
 - Node.js 20+
 - pnpm (`npm install -g pnpm`)
 - MongoDB Atlas account (free tier works)
-- Gmail account with App Password for SMTP
-
-### Environment Variables
-
-Create these as environment secrets (or a `.env` file — **never commit secrets**):
-
-| Variable | Description |
-|---|---|
-| `JWT_SECRET` | Random secret string for JWT signing |
-| `MONGODB_URI` | MongoDB Atlas connection string |
-| `SMTP_HOST` | SMTP host (e.g. `smtp.gmail.com`) |
-| `SMTP_PORT` | SMTP port (e.g. `587`) |
-| `SMTP_USER` | SMTP username / email |
-| `SMTP_PASS` | Gmail App Password (not your regular password — see below) |
-| `SMTP_FROM` | Sender name + email (e.g. `FUNDO AI <noreply@fundoai.com>`) |
-| `TAVILY_API_KEY` | Tavily API key for live web search |
-| `BK9_MODEL` | AI model (default: `meta-llama/llama-4-scout-17b-16e-instruct`) |
-
-> **Gmail SMTP:** Gmail requires an **App Password**, not your regular password. Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), enable 2-Step Verification, then generate an App Password for "Mail". Use that 16-character code as `SMTP_PASS`.
+- Gmail account with App Password
 
 ### Install & Run
 
@@ -116,22 +188,18 @@ Create these as environment secrets (or a `.env` file — **never commit secrets
 # Install all dependencies from repo root
 pnpm install
 
-# Start the API server (port assigned automatically)
+# Start the API server
 pnpm --filter @workspace/api-server run dev
 
-# Start the frontend (in a second terminal)
+# Start the frontend (second terminal)
 pnpm --filter @workspace/fundo-ai run dev
 ```
 
-Both will be available at `http://localhost:<PORT>` (ports assigned automatically by the environment).
+For local dev, `APP_URL` and `VITE_API_BASE_URL` can be left unset — requests go to relative `/api` automatically.
 
 ### Build for Production
 
 ```bash
-# Build everything
-pnpm run build
-
-# Or individually:
 pnpm --filter @workspace/api-server run build
 pnpm --filter @workspace/fundo-ai run build
 ```
@@ -146,12 +214,8 @@ All endpoints are prefixed with `/api`.
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `POST` | `/auth/signup` | — | Register + send verification email |
-| `POST` | `/auth/verify-email` | — | Verify OTP → returns JWT token |
-| `POST` | `/auth/resend-code` | — | Resend verification OTP |
-| `POST` | `/auth/login` | — | Login → returns JWT token |
-| `POST` | `/auth/forgot-password` | — | Send password reset OTP |
-| `POST` | `/auth/reset-password` | — | Reset password with OTP |
+| `POST` | `/auth/magic` | — | Send magic link to email (signup + login) |
+| `GET` | `/auth/magic/verify?token=` | — | Verify magic link → returns JWT |
 | `GET` | `/auth/me` | JWT | Get current user profile |
 | `PATCH` | `/auth/profile` | JWT | Update name / level |
 
@@ -159,9 +223,10 @@ All endpoints are prefixed with `/api`.
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `POST` | `/ai/chat` | JWT | Send message, get AI reply (with history) |
-| `POST` | `/ai/chat/guest` | — | Guest chat (no persistence) |
-| `GET` | `/ai/history` | JWT | Get chat history |
+| `POST` | `/ai/chat` | JWT | Send message → AI reply (saves history) |
+| `POST` | `/ai/chat/guest` | — | Guest chat (no persistence, 5-message limit) |
+| `POST` | `/ai/upload` | — | Upload file (image/PDF/Word) → returns extracted content |
+| `GET` | `/ai/history` | JWT | Get full chat history |
 | `DELETE` | `/ai/history` | JWT | Clear chat history |
 
 ### Health
@@ -186,12 +251,10 @@ All endpoints are prefixed with `/api`.
 │   │       │   └── auth.tsx       # AuthProvider + useAuth hook
 │   │       └── pages/
 │   │           ├── Home.tsx       # Landing page
-│   │           ├── Chat.tsx       # AI chat interface
-│   │           ├── Login.tsx      # Login page
-│   │           ├── Signup.tsx     # Signup page
-│   │           ├── VerifyEmail.tsx
-│   │           ├── ForgotPassword.tsx
-│   │           ├── ResetPassword.tsx
+│   │           ├── Chat.tsx       # AI chat + history sidebar + file uploads
+│   │           ├── Login.tsx      # Magic-link login
+│   │           ├── Signup.tsx     # Magic-link signup
+│   │           ├── MagicVerify.tsx# /auth/verify — token verification
 │   │           ├── About.tsx
 │   │           ├── Privacy.tsx
 │   │           └── Terms.tsx
@@ -200,40 +263,26 @@ All endpoints are prefixed with `/api`.
 │           ├── lib/
 │           │   ├── mongo.ts       # MongoDB connection
 │           │   ├── jwt.ts         # JWT sign/verify
-│           │   └── email.ts       # SMTP email helpers
+│           │   └── email.ts       # SMTP magic-link email helper
 │           ├── models/
 │           │   └── User.ts        # Mongoose User model
 │           ├── middlewares/
 │           │   └── auth.ts        # JWT auth middleware
 │           └── routes/
-│               ├── auth.ts        # All auth endpoints
-│               └── ai.ts          # AI chat endpoints
-├── replit.md                      # Project documentation
-└── README.md                      # This file
+│               ├── auth.ts        # Auth endpoints (magic link)
+│               └── ai.ts          # AI chat + file upload endpoints
+└── README.md
 ```
-
----
-
-## Deployment
-
-This platform is deployed on [Replit](https://replit.com) with automatic routing. The artifact router maps:
-
-- `/` → `artifacts/fundo-ai` (React frontend)
-- `/api/*` → `artifacts/api-server` (Express backend)
-
-For external deployment (VPS, Railway, Render), run both services and configure a reverse proxy (nginx/Caddy) to route `/api` to the Express server and everything else to the frontend.
 
 ---
 
 ## WhatsApp Bot
 
-The WhatsApp bot version is a separate integration available at:
-
 ```
 https://wa.me/263719647303
 ```
 
-It uses the same BK9 AI API and Tavily search as the web platform, with ZIMSEC curriculum alignment and the same FUNDO AI personality.
+Same BK9 AI engine, same ZIMSEC alignment, same FUNDO AI personality — on WhatsApp.
 
 ---
 
@@ -243,7 +292,6 @@ It uses the same BK9 AI API and Tavily search as the web platform, with ZIMSEC c
 |---|---|
 | **Creator & Developer** | Darrell Mucheri 🇿🇼 |
 | **Product** | FUNDO AI |
-| **Website** | [fundoai.gleeze.com](https://fundoai.gleeze.com) |
 | **WhatsApp** | +263 719 647 303 |
 | **Country** | Zimbabwe 🇿🇼 |
 
@@ -253,4 +301,4 @@ Built with ❤️ in Zimbabwe.
 
 ## License
 
-This platform is proprietary to FUNDO AI. All rights reserved © 2025 FUNDO AI.
+Proprietary — All rights reserved © 2025 FUNDO AI.

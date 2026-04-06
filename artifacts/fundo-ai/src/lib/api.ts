@@ -62,8 +62,7 @@ export const api = {
   uploadFile: async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "");
-    const res = await fetch(`${BASE}/api/ai/upload`, {
+    const res = await fetch(`${API}/ai/upload`, {
       method: "POST",
       headers: { ...(localStorage.getItem("fundo_token") ? { Authorization: `Bearer ${localStorage.getItem("fundo_token")}` } : {}) },
       body: formData,
