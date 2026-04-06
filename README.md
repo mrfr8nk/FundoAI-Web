@@ -143,7 +143,7 @@ Render hosts the API and frontend as **two separate services**. Follow these ste
    - **Name:** `fundo-ai`
    - **Root Directory:** leave blank
    - **Build Command:** `npm install -g pnpm && pnpm install && pnpm --filter @workspace/fundo-ai run build`
-   - **Publish Directory:** `artifacts/fundo-ai/dist`
+   - **Publish Directory:** `artifacts/fundo-ai/dist/public`
 4. Add this **Environment Variable**:
 
    | Key | Value |
@@ -156,6 +156,8 @@ Render hosts the API and frontend as **two separate services**. Follow these ste
    - **Action:** Rewrite
 
 6. Click **Create Static Site** → copy your frontend URL (e.g. `https://fundo-ai.onrender.com`)
+
+> **Note:** You do NOT need to set `PORT` or `BASE_PATH` on Render — the build handles both automatically.
 
 ---
 
