@@ -177,7 +177,12 @@ const upload = multer({
 });
 
 // ── POST /api/ai/upload ───────────────────────────────────────────────────────
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", requireAuth, (req, res, next) => {
+  upload.single("file")(req, res, (err: any) => {
+    if (err) { res.status(400).json({ error: err.message }); return; }
+    next();
+  });
+}, async (req, res) => {
   try {
     const file = req.file;
     if (!file) { res.status(400).json({ error: "No file uploaded" }); return; }

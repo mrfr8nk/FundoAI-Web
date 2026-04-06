@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: fundo-ai
+    runtime: node
+    buildCommand: npm install -g pnpm && pnpm install && pnpm --filter @workspace/fundo-ai run build && pnpm --filter @workspace/api-server run build
+    startCommand: pnpm --filter @workspace/api-server run start
+    healthCheckPath: /api/healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: APP_URL
+        sync: false
