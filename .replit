@@ -24,3 +24,10 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[userenv]
+
+[userenv.shared]
+JWT_SECRET = "fundo-ai-jwt-secret-2025-darrell-mucheri-zw-x9k2m"
+TAVILY_API_KEY = "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"
+BK9_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
