@@ -1,5 +1,9 @@
+// VITE_API_BASE_URL: set this on Render to your API service URL (e.g. https://fundo-ai-api.onrender.com)
+// In Replit / same-domain deployments, leave it unset — the relative /api path will be used.
 const BASE = import.meta.env.BASE_URL?.replace(/\/$/, "");
-const API = `${BASE}/api`;
+const API = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}`
+  : `${BASE}/api`;
 
 function getToken() {
   return localStorage.getItem("fundo_token");

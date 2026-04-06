@@ -9,7 +9,13 @@ import { requireAuth } from "../middlewares/auth";
 
 const router = Router();
 
-const APP_URL = process.env["APP_URL"] || "https://fundoai.gleeze.com";
+// APP_URL: set this to your deployed frontend URL (e.g. https://fundo-ai.onrender.com)
+// On Render the frontend URL is different from the API URL — always set APP_URL explicitly.
+// Fallback order: APP_URL env var → RENDER_EXTERNAL_URL (auto-set by Render) → localhost
+const APP_URL =
+  process.env["APP_URL"] ||
+  process.env["RENDER_EXTERNAL_URL"] ||
+  `http://localhost:${process.env["PORT"] || 8080}`;
 
 function makeCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
