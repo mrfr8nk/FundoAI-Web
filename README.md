@@ -94,84 +94,54 @@ This repository is a **pnpm monorepo** containing:
 
 > **Gmail App Password:** Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), enable 2-Step Verification if not already done, then generate an App Password for "Mail". Use the 16-character code as `SMTP_PASS`.
 
-### Frontend (build-time) variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `VITE_API_BASE_URL` | ✅ on Render | Full URL of your API server — e.g. `https://fundo-ai-api.onrender.com/api` |
-
-> On Render, the frontend and API are deployed as separate services with different URLs. You **must** set `VITE_API_BASE_URL` so the frontend knows where to send requests. In same-domain setups (Replit, nginx proxy), leave this unset and the relative `/api` path is used automatically.
-
 ---
 
-## Deploy on Render
+## Deploy on Render (single service)
 
-Render hosts the API and frontend as **two separate services**. Follow these steps:
+Everything — frontend + API — runs as **one Web Service** on Render. The Express server builds and serves the React app for you. No separate Static Site needed.
 
-### Step 1 — Deploy the API Server
+### Step 1 — Create the Web Service
 
 1. Go to [render.com](https://render.com) → **New → Web Service**
 2. Connect your GitHub repo
-3. Set:
-   - **Name:** `fundo-ai-api` (or anything you like)
-   - **Root Directory:** leave blank (monorepo root)
-   - **Build Command:** `npm install -g pnpm && pnpm install && pnpm --filter @workspace/api-server run build`
-   - **Start Command:** `pnpm --filter @workspace/api-server run start`
-   - **Instance Type:** Free (or Starter for always-on)
-4. Add these **Environment Variables** in the Render dashboard:
+3. Set these fields:
 
-   | Key | Value |
+   | Field | Value |
    |---|---|
-   | `MONGODB_URI` | Your Atlas connection string |
-   | `JWT_SECRET` | Any long random string |
-   | `SMTP_HOST` | `smtp.gmail.com` |
-   | `SMTP_PORT` | `587` |
-   | `SMTP_USER` | your-gmail@gmail.com |
-   | `SMTP_PASS` | Your 16-char Gmail App Password |
-   | `SMTP_FROM` | `FUNDO AI <your-gmail@gmail.com>` |
-   | `APP_URL` | *(leave blank for now — fill in after Step 2)* |
+   | **Name** | `fundo-ai` (or anything) |
+   | **Root Directory** | *(leave blank)* |
+   | **Runtime** | Node |
+   | **Build Command** | `npm install -g pnpm && pnpm install && pnpm --filter @workspace/fundo-ai run build && pnpm --filter @workspace/api-server run build` |
+   | **Start Command** | `pnpm --filter @workspace/api-server run start` |
+   | **Instance Type** | Free (or Starter for always-on) |
 
-5. Click **Create Web Service** → wait for deploy → copy the URL (e.g. `https://fundo-ai-api.onrender.com`)
+### Step 2 — Add environment variables
 
----
-
-### Step 2 — Deploy the Frontend
-
-1. Go to [render.com](https://render.com) → **New → Static Site**
-2. Connect the same repo
-3. Set:
-   - **Name:** `fundo-ai`
-   - **Root Directory:** leave blank
-   - **Build Command:** `npm install -g pnpm && pnpm install && pnpm --filter @workspace/fundo-ai run build`
-   - **Publish Directory:** `artifacts/fundo-ai/dist/public`
-4. Add this **Environment Variable**:
-
-   | Key | Value |
-   |---|---|
-   | `VITE_API_BASE_URL` | `https://fundo-ai-api.onrender.com/api` *(your API URL + /api)* |
-
-5. Add a **Rewrite Rule** so React routing works (single-page app):
-   - **Source:** `/*`
-   - **Destination:** `/index.html`
-   - **Action:** Rewrite
-
-6. Click **Create Static Site** → copy your frontend URL (e.g. `https://fundo-ai.onrender.com`)
-
-> **Note:** You do NOT need to set `PORT` or `BASE_PATH` on Render — the build handles both automatically.
-
----
-
-### Step 3 — Link them together
-
-Go back to your **API Server** service → **Environment** tab → add:
+In the **Environment** tab add all of these:
 
 | Key | Value |
 |---|---|
-| `APP_URL` | `https://fundo-ai.onrender.com` *(your frontend URL from Step 2)* |
+| `MONGODB_URI` | Your MongoDB Atlas connection string |
+| `JWT_SECRET` | Any long random string (min 32 chars) |
+| `SMTP_HOST` | `smtp.gmail.com` |
+| `SMTP_PORT` | `587` |
+| `SMTP_USER` | your-gmail@gmail.com |
+| `SMTP_PASS` | Your 16-char Gmail App Password |
+| `SMTP_FROM` | `FUNDO AI <your-gmail@gmail.com>` |
+| `APP_URL` | *(leave blank for now — fill in after first deploy)* |
 
-Click **Save Changes** — Render will redeploy automatically.
+> **Do NOT set** `PORT`, `BASE_PATH`, or `VITE_API_BASE_URL` — they are handled automatically in single-service mode.
 
-**Done.** Your magic links will now point to `https://fundo-ai.onrender.com/auth/verify?token=...` and everything will work correctly.
+### Step 3 — Deploy and set APP_URL
+
+1. Click **Create Web Service** — Render will build and deploy
+2. Once live, copy your service URL (e.g. `https://fundo-ai.onrender.com`)
+3. Go back to **Environment** → set `APP_URL` to that URL
+4. Click **Save Changes** — Render redeploys automatically
+
+**Done.** Your magic links will now point to `https://fundo-ai.onrender.com/auth/verify?token=...`
+
+> **How it works:** The build command compiles the React app first, then compiles the Express server. At runtime the Express server detects the compiled frontend at `artifacts/fundo-ai/dist/public` and serves it as static files, with a fallback to `index.html` for all React routes. The `/api/*` routes are handled by Express as normal.
 
 ---
 
