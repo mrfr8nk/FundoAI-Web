@@ -10,11 +10,15 @@ import { requireAuth } from "../middlewares/auth";
 const router = Router();
 
 // APP_URL: set this to your deployed frontend URL (e.g. https://fundo-ai.onrender.com)
-// On Render the frontend URL is different from the API URL — always set APP_URL explicitly.
-// Fallback order: APP_URL env var → RENDER_EXTERNAL_URL (auto-set by Render) → localhost
+// Fallback order:
+//   1. APP_URL env var (always wins — set this in production)
+//   2. RENDER_EXTERNAL_URL (auto-set by Render)
+//   3. REPLIT_DEV_DOMAIN (auto-set by Replit — used during development)
+//   4. localhost (last resort)
 const APP_URL =
   process.env["APP_URL"] ||
   process.env["RENDER_EXTERNAL_URL"] ||
+  (process.env["REPLIT_DEV_DOMAIN"] ? `https://${process.env["REPLIT_DEV_DOMAIN"]}` : null) ||
   `http://localhost:${process.env["PORT"] || 8080}`;
 
 function makeCode() {
