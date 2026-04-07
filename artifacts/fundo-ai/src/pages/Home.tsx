@@ -5,7 +5,9 @@ import {
   Brain, BookOpen, Globe, Calculator, FileText, Database,
   Bot, ArrowRight, Users, Target, Clock, Star,
   Menu, X, LogOut, MessageCircle, ChevronRight,
-  Zap, Shield, GraduationCap,
+  Zap, Shield, GraduationCap, Microscope, FlaskConical,
+  Languages, Music, Palette, Atom, BarChart2, Code2,
+  Search, Sparkles, PenLine, Lightbulb, Camera,
 } from "lucide-react";
 
 /* ── Scroll reveal ── */
@@ -50,7 +52,7 @@ function useCountUp(target: string, duration = 1200) {
   return { display, start };
 }
 
-/* ── Reveal wrapper ── */
+/* ── Reveal wrapper (slide up) ── */
 function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   const { ref, visible } = useScrollReveal();
   return (
@@ -65,6 +67,60 @@ function Reveal({ children, delay = 0, className = "" }: { children: React.React
     >
       {children}
     </div>
+  );
+}
+
+/* ── Reveal from side ── */
+function RevealSide({ children, from = "left", delay = 0, className = "" }: {
+  children: React.ReactNode; from?: "left" | "right"; delay?: number; className?: string;
+}) {
+  const { ref, visible } = useScrollReveal(0.1);
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "none" : `translateX(${from === "left" ? "-36px" : "36px"})`,
+        transition: `opacity 0.65s ease ${delay}s, transform 0.65s cubic-bezier(0.22,1,0.36,1) ${delay}s`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ── Marquee strip ── */
+const MARQUEE_ROW_1 = [Brain, BookOpen, Globe, Calculator, FileText, Database, GraduationCap, Microscope, FlaskConical, Atom, BarChart2, Code2];
+const MARQUEE_ROW_2 = [Languages, Music, Palette, Search, Sparkles, PenLine, Lightbulb, Camera, Users, Target, Zap, Shield];
+
+function MarqueeStrip() {
+  function Row({ icons, reverse = false }: { icons: typeof MARQUEE_ROW_1; reverse?: boolean }) {
+    const doubled = [...icons, ...icons];
+    return (
+      <div className="overflow-hidden" style={{ maskImage: "linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%)" }}>
+        <div className={reverse ? "marquee-track-rev" : "marquee-track"} style={{ display: "flex", width: "max-content", gap: "0px" }}>
+          {doubled.map((Icon, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-center flex-shrink-0 mx-2 rounded-xl transition-all duration-200 cursor-default"
+              style={{ width: 52, height: 52, background: "#111117", border: "1px solid #1e1e2b" }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(139,92,246,0.35)"; (e.currentTarget as HTMLElement).style.background = "rgba(139,92,246,0.08)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#1e1e2b"; (e.currentTarget as HTMLElement).style.background = "#111117"; }}
+            >
+              <Icon size={20} style={{ color: "#4a4a62" }} className="transition-colors duration-200" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <section className="py-8 space-y-3 overflow-hidden">
+      <Row icons={MARQUEE_ROW_1} />
+      <Row icons={MARQUEE_ROW_2} reverse />
+    </section>
   );
 }
 
@@ -461,6 +517,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ════════ MARQUEE ════════ */}
+      <MarqueeStrip />
+
       {/* ════════ STATS ════════ */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -515,8 +574,13 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-6">
             {STEPS.map((step, i) => (
-              <Reveal key={step.n} delay={i * 0.1}>
-                <div className="p-6 rounded-2xl relative" style={{ background: "#111117", border: "1px solid #1e1e2b" }}>
+              <RevealSide key={step.n} from={i % 2 === 0 ? "left" : "right"} delay={i * 0.1}>
+                <div
+                  className="p-6 rounded-2xl relative h-full transition-all duration-200"
+                  style={{ background: "#111117", border: "1px solid #1e1e2b" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(139,92,246,0.3)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#1e1e2b"; }}
+                >
                   <div className="text-4xl font-black mb-4 text-gradient" style={{ lineHeight: 1 }}>{step.n}</div>
                   <h3 className="text-base font-bold text-white mb-2">{step.title}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: "#6b6b85" }}>{step.desc}</p>
@@ -526,7 +590,7 @@ export default function Home() {
                     </div>
                   )}
                 </div>
-              </Reveal>
+              </RevealSide>
             ))}
           </div>
         </div>

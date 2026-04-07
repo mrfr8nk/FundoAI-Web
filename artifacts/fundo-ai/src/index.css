@@ -224,6 +224,19 @@ html {
   from { transform: translateX(-50%); }
   to   { transform: translateX(0); }
 }
+.marquee-track      { animation: icon-scroll     28s linear infinite; }
+.marquee-track-rev  { animation: icon-scroll-rev 22s linear infinite; }
+.marquee-track:hover,
+.marquee-track-rev:hover { animation-play-state: paused; }
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(32px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
 
 /* ── Number counter ── */
 @keyframes count-in {

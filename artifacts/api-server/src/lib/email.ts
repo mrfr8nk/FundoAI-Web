@@ -2,18 +2,19 @@ import nodemailer from "nodemailer";
 
 const SMTP_CONFIGURED = !!(process.env["SMTP_HOST"] && process.env["SMTP_USER"] && process.env["SMTP_PASS"]);
 
+const SMTP_PORT = Number(process.env["SMTP_PORT"] || 465);
 const transporter = nodemailer.createTransport({
   host: process.env["SMTP_HOST"] || "smtp.gmail.com",
-  port: Number(process.env["SMTP_PORT"] || 587),
-  secure: false,
+  port: SMTP_PORT,
+  secure: SMTP_PORT === 465,
   auth: {
     user: process.env["SMTP_USER"],
     pass: process.env["SMTP_PASS"],
   },
   tls: { rejectUnauthorized: false },
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 15000,
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 25000,
 });
 
 /* ── Shared design tokens ───────────────────────────────── */
@@ -162,16 +163,21 @@ export async function sendMagicLinkEmail(to: string, name: string, link: string,
     </table>`}
   `;
 
-  await transporter.sendMail({
-    from: process.env["SMTP_FROM"] || `FUNDO AI <noreply@fundoai.com>`,
-    to,
-    subject: isNew ? `Welcome to FUNDO AI — finish your signup` : `Sign in to FUNDO AI`,
-    html: base(
-      isNew ? `Welcome! Click to finish creating your FUNDO AI account. Link expires in 15 minutes.`
-            : `Your FUNDO AI sign-in link is ready. Click to sign in — expires in 15 minutes.`,
-      body
-    ),
-  });
+  try {
+    await transporter.sendMail({
+      from: process.env["SMTP_FROM"] || `FUNDO AI <noreply@fundoai.com>`,
+      to,
+      subject: isNew ? `Welcome to FUNDO AI — finish your signup` : `Sign in to FUNDO AI`,
+      html: base(
+        isNew ? `Welcome! Click to finish creating your FUNDO AI account. Link expires in 15 minutes.`
+              : `Your FUNDO AI sign-in link is ready. Click to sign in — expires in 15 minutes.`,
+        body
+      ),
+    });
+  } catch (smtpErr: any) {
+    console.error(`[EMAIL] SMTP sendMail failed for ${to}:`, smtpErr?.message || smtpErr);
+    throw smtpErr;
+  }
 }
 
 /* ── Legacy: kept for backward compatibility ─────────────── */
