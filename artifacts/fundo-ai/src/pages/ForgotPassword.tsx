@@ -23,52 +23,53 @@ export default function ForgotPassword() {
   }
 
   if (sent) return (
-    <AuthCard title="Code sent! 📬" subtitle={`Check ${email} for your reset code`}>
-      <div className="space-y-6">
+    <AuthCard title="Code sent!" subtitle={`Check ${email} for your reset code`}>
+      <div className="space-y-5">
         <div className="text-center py-4">
-          <CheckCircle2 size={56} className="mx-auto mb-4" style={{ color: "#25d366" }} />
-          <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+            style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.2)" }}>
+            <CheckCircle2 size={28} className="text-violet-400" />
+          </div>
+          <p className="text-sm" style={{ color: "#8888a0" }}>
             We sent a 6-digit reset code to your email. It expires in 10 minutes.
           </p>
         </div>
         <button onClick={() => nav(`/reset-password?email=${encodeURIComponent(email)}`)}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white"
-          style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 20px rgba(168,85,247,0.35)" }}>
-          Enter reset code <ArrowRight size={16} />
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-violet-700 hover:bg-violet-600 transition-colors">
+          Enter reset code <ArrowRight size={15} />
         </button>
       </div>
     </AuthCard>
   );
 
   return (
-    <AuthCard title="Forgot password? 🔑" subtitle="Enter your email and we'll send you a reset code">
+    <AuthCard title="Forgot your password?" subtitle="Enter your email and we'll send you a reset code">
       <form onSubmit={submit} className="space-y-4">
         {error && (
-          <div className="px-4 py-3 rounded-xl text-sm font-medium" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}>
+          <div className="px-3 py-2.5 rounded-xl text-xs font-medium" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
             {error}
           </div>
         )}
         <div>
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>Email address</label>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: "#6b6b85" }}>Email address</label>
           <div className="relative">
-            <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(255,255,255,0.3)" }} />
+            <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#4a4a62" }} />
             <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="you@email.com"
-              className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-white outline-none transition-all duration-200"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-              onFocus={e => { e.target.style.borderColor = "rgba(168,85,247,0.5)"; e.target.style.boxShadow = "0 0 0 3px rgba(168,85,247,0.1)"; }}
-              onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; e.target.style.boxShadow = "none"; }} />
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150"
+              style={{ background: "#1a1a27", border: "1px solid #1e1e2b" }}
+              onFocus={e => { e.target.style.borderColor = "rgba(139,92,246,0.5)"; }}
+              onBlur={e => { e.target.style.borderColor = "#1e1e2b"; }} />
           </div>
         </div>
         <button type="submit" disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white transition-all duration-300"
-          style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 20px rgba(168,85,247,0.35)", opacity: loading ? 0.7 : 1 }}
-          onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.transform = "scale(1.02)"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "none"; }}>
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <><span>Send reset code</span><ArrowRight size={16} /></>}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-violet-700 hover:bg-violet-600 transition-colors disabled:opacity-60">
+          {loading ? <Loader2 size={15} className="animate-spin" /> : <><span>Send reset code</span><ArrowRight size={15} /></>}
         </button>
-        <p className="text-center text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>
+        <p className="text-center text-sm" style={{ color: "#6b6b85" }}>
           Remember it?{" "}
-          <button type="button" onClick={() => nav("/login")} className="font-semibold" style={{ color: "#a855f7" }}>Sign in</button>
+          <button type="button" onClick={() => nav("/login")} className="font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+            Sign in
+          </button>
         </p>
       </form>
     </AuthCard>

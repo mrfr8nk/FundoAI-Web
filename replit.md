@@ -13,7 +13,7 @@ FUNDO AI is Zimbabwe's premier AI study assistant, built as a pnpm workspace mon
 | Database | MongoDB (Mongoose) |
 | Auth | bcryptjs + JWT + nodemailer (SMTP) |
 | AI | BK9 API (Llama 4 Scout) + Tavily search + DuckDuckGo |
-| UI | Glassmorphism CSS + Lucide icons + Framer Motion |
+| UI | Dark theme + single violet accent (#8b5cf6) + Lucide icons |
 | Monorepo | pnpm workspaces |
 
 ## Artifacts
@@ -26,7 +26,7 @@ FUNDO AI is Zimbabwe's premier AI study assistant, built as a pnpm workspace mon
 
 | Route | Page |
 |---|---|
-| `/` | Landing page (glassmorphism) |
+| `/` | Landing page (professional dark SaaS) |
 | `/chat` | AI chat interface (guest + authenticated) |
 | `/login` | Login with email/password |
 | `/signup` | Signup with email verification |

@@ -5,6 +5,19 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import AuthCard from "@/components/AuthCard";
 
+const inputBase = {
+  background: "#1a1a27",
+  border: "1px solid #1e1e2b",
+} as React.CSSProperties;
+
+const focusIn = (e: React.FocusEvent<HTMLInputElement>) => {
+  e.target.style.borderColor = "rgba(139,92,246,0.5)";
+  e.target.style.outline = "none";
+};
+const focusOut = (e: React.FocusEvent<HTMLInputElement>) => {
+  e.target.style.borderColor = "#1e1e2b";
+};
+
 export default function Login() {
   const [mode, setMode] = useState<"magic" | "password">("magic");
   const [email, setEmail] = useState("");
@@ -55,39 +68,26 @@ export default function Login() {
     } finally { setLoading(false); }
   }
 
-  const inputStyle = {
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.1)",
-  };
-  const focusIn = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = "rgba(168,85,247,0.5)";
-    e.target.style.boxShadow = "0 0 0 3px rgba(168,85,247,0.1)";
-  };
-  const focusOut = (e: React.FocusEvent<HTMLInputElement>) => {
-    e.target.style.borderColor = "rgba(255,255,255,0.1)";
-    e.target.style.boxShadow = "none";
-  };
-
   if (sent) {
     return (
       <AuthCard title="" subtitle="">
         <div className="flex flex-col items-center text-center py-4">
-          <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6"
-            style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.2),rgba(124,58,237,0.1))", border: "1px solid rgba(168,85,247,0.25)", boxShadow: "0 0 40px rgba(168,85,247,0.2)" }}>
-            <CheckCircle2 size={40} style={{ color: "#a855f7" }} />
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+            style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.2)" }}>
+            <CheckCircle2 size={32} className="text-violet-400" />
           </div>
-          <h2 className="text-2xl font-black text-white mb-2">Check your inbox ✉️</h2>
-          <p className="text-sm mb-6 leading-relaxed" style={{ color: "rgba(255,255,255,0.5)", maxWidth: 300 }}>
-            We sent a sign-in link to <strong className="text-white">{email}</strong>.<br />
-            Click it to sign in — it expires in 15 minutes.
+          <h2 className="text-xl font-bold text-white mb-2">Check your inbox</h2>
+          <p className="text-sm mb-5 leading-relaxed" style={{ color: "#8888a0", maxWidth: 280 }}>
+            We sent a sign-in link to <strong className="text-white">{email}</strong>.
+            Click it to sign in — expires in 15 minutes.
           </p>
           <div className="space-y-2 w-full">
-            <div className="px-4 py-3 rounded-xl text-sm" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.45)" }}>
+            <div className="px-3 py-2.5 rounded-xl text-xs text-center" style={{ background: "#1a1a27", border: "1px solid #1e1e2b", color: "#6b6b85" }}>
               💡 Check your spam folder if you don't see it
             </div>
             <button onClick={() => { setSent(false); setEmail(""); }}
-              className="w-full py-3 rounded-xl text-sm font-medium transition-colors"
-              style={{ color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              className="w-full py-2.5 rounded-xl text-sm font-medium transition-colors"
+              style={{ color: "#6b6b85", background: "#1a1a27", border: "1px solid #1e1e2b" }}>
               Use a different email
             </button>
           </div>
@@ -97,22 +97,22 @@ export default function Login() {
   }
 
   return (
-    <AuthCard title="Welcome back 👋" subtitle="Sign in to your FUNDO AI account">
+    <AuthCard title="Welcome back" subtitle="Sign in to your FUNDO AI account">
       {/* Mode tabs */}
-      <div className="flex rounded-xl p-1 mb-5" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
+      <div className="flex rounded-xl p-1 mb-5" style={{ background: "#1a1a27", border: "1px solid #1e1e2b" }}>
         {(["magic", "password"] as const).map(m => (
           <button key={m} type="button" onClick={() => { setMode(m); setError(""); }}
-            className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200"
+            className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-150"
             style={mode === m
-              ? { background: "linear-gradient(135deg,#a855f7,#7c3aed)", color: "#fff", boxShadow: "0 2px 10px rgba(168,85,247,0.3)" }
-              : { color: "rgba(255,255,255,0.4)" }}>
-            {m === "magic" ? "✨ Magic Link" : "🔑 Password"}
+              ? { background: "#7c3aed", color: "#fff" }
+              : { color: "#6b6b85" }}>
+            {m === "magic" ? "Magic Link" : "Password"}
           </button>
         ))}
       </div>
 
       {error && (
-        <div className="px-4 py-3 rounded-xl text-sm font-medium mb-4" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}>
+        <div className="px-3 py-2.5 rounded-xl text-xs font-medium mb-4" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
           {error}
         </div>
       )}
@@ -121,29 +121,30 @@ export default function Login() {
       {mode === "magic" && (
         <form onSubmit={submitMagic} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>Your email</label>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: "#6b6b85" }}>Email address</label>
             <div className="relative">
-              <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(255,255,255,0.3)" }} />
+              <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#4a4a62" }} />
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="you@email.com"
-                className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-white outline-none transition-all duration-200"
-                style={inputStyle} onFocus={focusIn} onBlur={focusOut} />
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150"
+                style={inputBase} onFocus={focusIn} onBlur={focusOut} />
             </div>
           </div>
           <button type="submit" disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white transition-all duration-300"
-            style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 20px rgba(168,85,247,0.35)", opacity: loading ? 0.7 : 1 }}
-            onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.transform = "scale(1.02)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "none"; }}>
-            {loading ? <><Loader2 size={16} className="animate-spin" /><span>{slowConn ? "Waking server up…" : "Sending…"}</span></> : <><Sparkles size={15} /><span>Send magic link</span><ArrowRight size={16} /></>}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-violet-700 hover:bg-violet-600 transition-colors disabled:opacity-60">
+            {loading ? (
+              <><Loader2 size={15} className="animate-spin" /><span>{slowConn ? "Waking server up…" : "Sending…"}</span></>
+            ) : (
+              <><Sparkles size={14} /><span>Send magic link</span><ArrowRight size={15} /></>
+            )}
           </button>
           {slowConn && (
-            <p className="text-center text-xs animate-pulse" style={{ color: "rgba(168,85,247,0.8)" }}>
+            <p className="text-center text-xs" style={{ color: "#a78bfa" }}>
               ⏳ Server is starting up — this takes ~30s on first load
             </p>
           )}
           {!slowConn && (
-            <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+            <p className="text-center text-xs" style={{ color: "#4a4a62" }}>
               We'll email you a one-click sign-in link — no password needed
             </p>
           )}
@@ -154,57 +155,63 @@ export default function Login() {
       {mode === "password" && (
         <form onSubmit={submitPassword} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>Email</label>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: "#6b6b85" }}>Email</label>
             <div className="relative">
-              <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(255,255,255,0.3)" }} />
+              <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#4a4a62" }} />
               <input type="email" required value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="you@email.com"
-                className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-white outline-none transition-all duration-200"
-                style={inputStyle} onFocus={focusIn} onBlur={focusOut} />
+                className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150"
+                style={inputBase} onFocus={focusIn} onBlur={focusOut} />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>Password</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold" style={{ color: "#6b6b85" }}>Password</label>
+              <button type="button" onClick={() => nav("/forgot-password")}
+                className="text-xs transition-colors"
+                style={{ color: "#6b6b85" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#a78bfa")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#6b6b85")}>
+                Forgot password?
+              </button>
+            </div>
             <div className="relative">
-              <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(255,255,255,0.3)" }} />
+              <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#4a4a62" }} />
               <input type={showPw ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-10 py-3 rounded-xl text-sm text-white outline-none transition-all duration-200"
-                style={inputStyle} onFocus={focusIn} onBlur={focusOut} />
+                className="w-full pl-9 pr-10 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150"
+                style={inputBase} onFocus={focusIn} onBlur={focusOut} />
               <button type="button" onClick={() => setShowPw(s => !s)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2"
-                style={{ color: "rgba(255,255,255,0.3)" }}>
-                {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors" style={{ color: "#4a4a62" }}
+                onMouseEnter={e => (e.currentTarget.style.color = "#8888a0")}
+                onMouseLeave={e => (e.currentTarget.style.color = "#4a4a62")}>
+                {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
               </button>
             </div>
           </div>
           <button type="submit" disabled={loading}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white transition-all duration-300"
-            style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 20px rgba(168,85,247,0.35)", opacity: loading ? 0.7 : 1 }}
-            onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.transform = "scale(1.02)"; }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "none"; }}>
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <><Lock size={15} /><span>Sign in</span><ArrowRight size={16} /></>}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-violet-700 hover:bg-violet-600 transition-colors disabled:opacity-60">
+            {loading ? <Loader2 size={15} className="animate-spin" /> : <><Lock size={14} /><span>Sign in</span><ArrowRight size={15} /></>}
           </button>
-          <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+          <p className="text-center text-xs" style={{ color: "#4a4a62" }}>
             No password yet?{" "}
-            <button type="button" onClick={() => setMode("magic")} className="font-semibold" style={{ color: "#a855f7" }}>
+            <button type="button" onClick={() => setMode("magic")} className="font-semibold text-violet-400 hover:text-violet-300 transition-colors">
               Use a magic link instead
             </button>
           </p>
         </form>
       )}
 
-      <div className="flex items-center gap-3 mt-4">
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
-        <span className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>or</span>
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+      <div className="flex items-center gap-3 mt-5">
+        <div className="flex-1 h-px" style={{ background: "#1e1e2b" }} />
+        <span className="text-xs" style={{ color: "#3a3a50" }}>or</span>
+        <div className="flex-1 h-px" style={{ background: "#1e1e2b" }} />
       </div>
 
-      <p className="text-center text-sm mt-4" style={{ color: "rgba(255,255,255,0.38)" }}>
+      <p className="text-center text-sm mt-4" style={{ color: "#6b6b85" }}>
         Don't have an account?{" "}
-        <button type="button" onClick={() => nav("/signup")} className="font-semibold transition-colors" style={{ color: "#a855f7" }}
-          onMouseEnter={e => { e.currentTarget.style.color = "#c084fc"; }}
-          onMouseLeave={e => { e.currentTarget.style.color = "#a855f7"; }}>
+        <button type="button" onClick={() => nav("/signup")}
+          className="font-semibold text-violet-400 hover:text-violet-300 transition-colors">
           Sign up free
         </button>
       </p>

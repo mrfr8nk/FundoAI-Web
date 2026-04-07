@@ -31,9 +31,7 @@ export default function VerifyEmail() {
     next[i] = ch;
     setDigits(next);
     if (ch && i < 5) refs.current[i + 1]?.focus();
-    if (next.every(d => d)) {
-      handleSubmit(next.join(""));
-    }
+    if (next.every(d => d)) handleSubmit(next.join(""));
   }
 
   function handleKey(i: number, e: React.KeyboardEvent) {
@@ -44,10 +42,7 @@ export default function VerifyEmail() {
 
   function handlePaste(e: React.ClipboardEvent) {
     const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (text.length === 6) {
-      setDigits(text.split(""));
-      handleSubmit(text);
-    }
+    if (text.length === 6) { setDigits(text.split("")); handleSubmit(text); }
   }
 
   async function handleSubmit(code: string) {
@@ -77,35 +72,38 @@ export default function VerifyEmail() {
   }
 
   if (success) return (
-    <AuthCard title="Email verified! 🎉" subtitle="You're all set. Redirecting to your chat...">
+    <AuthCard title="Email verified!" subtitle="You're all set. Redirecting to your chat...">
       <div className="text-center py-8">
-        <div className="flex items-center justify-center mb-4">
-          <CheckCircle2 size={64} style={{ color: "#25d366" }} />
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+          style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.2)" }}>
+          <CheckCircle2 size={28} className="text-violet-400" />
         </div>
-        <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>Logging you in...</p>
+        <p className="text-sm" style={{ color: "#8888a0" }}>Logging you in…</p>
       </div>
     </AuthCard>
   );
 
   return (
-    <AuthCard title="Check your email 📬" subtitle={`We sent a 6-digit code to ${email || "your email"}`}>
-      <div className="space-y-6">
+    <AuthCard title="Check your email" subtitle={`We sent a 6-digit code to ${email || "your email"}`}>
+      <div className="space-y-5">
         {error && (
-          <div className="px-4 py-3 rounded-xl text-sm font-medium" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}>
+          <div className="px-3 py-2.5 rounded-xl text-xs font-medium" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
             {error}
           </div>
         )}
 
-        {/* OTP inputs */}
-        <div className="flex justify-center gap-3" onPaste={handlePaste}>
+        <div className="flex justify-center gap-2.5" onPaste={handlePaste}>
           {digits.map((d, i) => (
             <input
               key={i} ref={el => { refs.current[i] = el; }}
               type="text" inputMode="numeric" maxLength={1} value={d}
               onChange={e => handleDigit(i, e.target.value)}
               onKeyDown={e => handleKey(i, e)}
-              className="w-11 h-14 text-center text-xl font-black text-white rounded-xl outline-none transition-all duration-200"
-              style={{ background: "rgba(255,255,255,0.08)", border: `1px solid ${d ? "rgba(168,85,247,0.6)" : "rgba(255,255,255,0.12)"}`, boxShadow: d ? "0 0 0 3px rgba(168,85,247,0.1)" : "none" }}
+              className="w-10 h-12 text-center text-lg font-bold text-white rounded-xl outline-none transition-all duration-150"
+              style={{
+                background: "#1a1a27",
+                border: `1px solid ${d ? "rgba(139,92,246,0.5)" : "#1e1e2b"}`,
+              }}
             />
           ))}
         </div>
@@ -113,24 +111,25 @@ export default function VerifyEmail() {
         <button
           onClick={() => handleSubmit(digits.join(""))}
           disabled={loading || digits.some(d => !d)}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white transition-all duration-300"
-          style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 20px rgba(168,85,247,0.35)", opacity: (loading || digits.some(d => !d)) ? 0.6 : 1 }}>
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <><span>Verify email</span><ArrowRight size={16} /></>}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-violet-700 hover:bg-violet-600 transition-colors disabled:opacity-60">
+          {loading ? <Loader2 size={15} className="animate-spin" /> : <><span>Verify email</span><ArrowRight size={15} /></>}
         </button>
 
         <div className="text-center">
-          <p className="text-sm mb-1" style={{ color: "rgba(255,255,255,0.38)" }}>Didn't receive the code?</p>
+          <p className="text-sm mb-2" style={{ color: "#6b6b85" }}>Didn't receive the code?</p>
           <button onClick={resend} disabled={resending || countdown > 0}
-            className="flex items-center justify-center gap-1.5 mx-auto text-sm font-semibold transition-all duration-200"
-            style={{ color: countdown > 0 ? "rgba(255,255,255,0.25)" : "#a855f7" }}>
+            className="flex items-center justify-center gap-1.5 mx-auto text-sm font-semibold transition-colors"
+            style={{ color: countdown > 0 ? "#3a3a50" : "#a78bfa" }}>
             {resending ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
             {countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
           </button>
         </div>
 
-        <p className="text-center text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>
+        <p className="text-center text-sm" style={{ color: "#6b6b85" }}>
           Wrong email?{" "}
-          <button onClick={() => nav("/signup")} className="font-semibold" style={{ color: "#a855f7" }}>Go back</button>
+          <button onClick={() => nav("/signup")} className="font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+            Go back
+          </button>
         </p>
       </div>
     </AuthCard>

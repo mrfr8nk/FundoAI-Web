@@ -4,6 +4,10 @@ import { useLocation, useSearch } from "wouter";
 import { api } from "@/lib/api";
 import AuthCard from "@/components/AuthCard";
 
+const inputBase = { background: "#1a1a27", border: "1px solid #1e1e2b" } as React.CSSProperties;
+const focusIn = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = "rgba(139,92,246,0.5)"; };
+const focusOut = (e: React.FocusEvent<HTMLInputElement>) => { e.target.style.borderColor = "#1e1e2b"; };
+
 export default function ResetPassword() {
   const search = useSearch();
   const params = new URLSearchParams(search);
@@ -20,9 +24,7 @@ export default function ResetPassword() {
 
   function handleDigit(i: number, val: string) {
     const ch = val.replace(/\D/g, "").slice(-1);
-    const next = [...digits];
-    next[i] = ch;
-    setDigits(next);
+    const next = [...digits]; next[i] = ch; setDigits(next);
     if (ch && i < 5) refs.current[i + 1]?.focus();
   }
   function handleKey(i: number, e: React.KeyboardEvent) {
@@ -30,8 +32,7 @@ export default function ResetPassword() {
   }
 
   async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
+    e.preventDefault(); setError("");
     if (password !== confirm) { setError("Passwords don't match"); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters"); return; }
     const code = digits.join("");
@@ -41,81 +42,79 @@ export default function ResetPassword() {
       await api.resetPassword({ email, code, newPassword: password });
       setSuccess(true);
       setTimeout(() => nav("/login"), 2000);
-    } catch (err: any) {
-      setError(err.message);
-    } finally { setLoading(false); }
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
   }
 
   if (success) return (
-    <AuthCard title="Password reset! 🎉" subtitle="Your password has been updated successfully">
-      <div className="text-center py-8">
-        <CheckCircle2 size={64} className="mx-auto mb-4" style={{ color: "#25d366" }} />
-        <p className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>Redirecting to login...</p>
+    <AuthCard title="Password reset!" subtitle="Your password has been updated successfully">
+      <div className="text-center py-6">
+        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+          style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.2)" }}>
+          <CheckCircle2 size={28} className="text-violet-400" />
+        </div>
+        <p className="text-sm" style={{ color: "#8888a0" }}>Redirecting to login…</p>
       </div>
     </AuthCard>
   );
 
   return (
-    <AuthCard title="Reset password 🔑" subtitle={`Enter the code sent to ${email || "your email"}`}>
-      <form onSubmit={submit} className="space-y-5">
+    <AuthCard title="Reset your password" subtitle={`Enter the code sent to ${email || "your email"}`}>
+      <form onSubmit={submit} className="space-y-4">
         {error && (
-          <div className="px-4 py-3 rounded-xl text-sm font-medium" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}>
+          <div className="px-3 py-2.5 rounded-xl text-xs font-medium" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
             {error}
           </div>
         )}
 
-        {/* Code */}
         <div>
-          <label className="block text-xs font-semibold mb-2" style={{ color: "rgba(255,255,255,0.55)" }}>6-digit code</label>
+          <label className="block text-xs font-semibold mb-2" style={{ color: "#6b6b85" }}>6-digit code</label>
           <div className="flex justify-center gap-2.5">
             {digits.map((d, i) => (
               <input key={i} ref={el => { refs.current[i] = el; }} type="text" inputMode="numeric" maxLength={1} value={d}
                 onChange={e => handleDigit(i, e.target.value)} onKeyDown={e => handleKey(i, e)}
-                className="w-10 h-12 text-center text-lg font-black text-white rounded-xl outline-none transition-all duration-200"
-                style={{ background: "rgba(255,255,255,0.08)", border: `1px solid ${d ? "rgba(168,85,247,0.6)" : "rgba(255,255,255,0.12)"}` }} />
+                className="w-10 h-12 text-center text-lg font-bold text-white rounded-xl outline-none transition-all duration-150"
+                style={{ background: "#1a1a27", border: `1px solid ${d ? "rgba(139,92,246,0.5)" : "#1e1e2b"}` }} />
             ))}
           </div>
         </div>
 
-        {/* New password */}
         <div>
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>New password</label>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: "#6b6b85" }}>New password</label>
           <div className="relative">
-            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(255,255,255,0.3)" }} />
+            <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#4a4a62" }} />
             <input type={show ? "text" : "password"} required value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 6 characters"
-              className="w-full pl-10 pr-12 py-3 rounded-xl text-sm text-white outline-none transition-all duration-200"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-              onFocus={e => { e.target.style.borderColor = "rgba(168,85,247,0.5)"; e.target.style.boxShadow = "0 0 0 3px rgba(168,85,247,0.1)"; }}
-              onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; e.target.style.boxShadow = "none"; }} />
-            <button type="button" onClick={() => setShow(s => !s)} className="absolute right-3.5 top-1/2 -translate-y-1/2" style={{ color: "rgba(255,255,255,0.3)" }}>
-              {show ? <EyeOff size={16} /> : <Eye size={16} />}
+              className="w-full pl-9 pr-10 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150"
+              style={inputBase} onFocus={focusIn} onBlur={focusOut} />
+            <button type="button" onClick={() => setShow(s => !s)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#4a4a62" }}>
+              {show ? <EyeOff size={15} /> : <Eye size={15} />}
             </button>
           </div>
         </div>
 
-        {/* Confirm */}
         <div>
-          <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>Confirm password</label>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: "#6b6b85" }}>Confirm password</label>
           <div className="relative">
-            <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "rgba(255,255,255,0.3)" }} />
+            <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: "#4a4a62" }} />
             <input type={show ? "text" : "password"} required value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="••••••••"
-              className="w-full pl-10 pr-4 py-3 rounded-xl text-sm text-white outline-none transition-all duration-200"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}
-              onFocus={e => { e.target.style.borderColor = "rgba(168,85,247,0.5)"; e.target.style.boxShadow = "0 0 0 3px rgba(168,85,247,0.1)"; }}
-              onBlur={e => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; e.target.style.boxShadow = "none"; }} />
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-150"
+              style={inputBase} onFocus={focusIn} onBlur={focusOut} />
           </div>
         </div>
 
         <button type="submit" disabled={loading}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white transition-all duration-300"
-          style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 20px rgba(168,85,247,0.35)", opacity: loading ? 0.7 : 1 }}>
-          {loading ? <Loader2 size={16} className="animate-spin" /> : <><span>Reset password</span><ArrowRight size={16} /></>}
+          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-violet-700 hover:bg-violet-600 transition-colors disabled:opacity-60">
+          {loading ? <Loader2 size={15} className="animate-spin" /> : <><span>Reset password</span><ArrowRight size={15} /></>}
         </button>
 
-        <p className="text-center text-sm" style={{ color: "rgba(255,255,255,0.38)" }}>
-          <button type="button" onClick={() => nav("/forgot-password")} style={{ color: "#a855f7" }}>Resend code</button>
+        <p className="text-center text-sm" style={{ color: "#6b6b85" }}>
+          <button type="button" onClick={() => nav("/forgot-password")} className="text-violet-400 hover:text-violet-300 transition-colors font-medium">
+            Resend code
+          </button>
           {" · "}
-          <button type="button" onClick={() => nav("/login")} style={{ color: "rgba(255,255,255,0.45)" }}>Back to login</button>
+          <button type="button" onClick={() => nav("/login")} className="hover:text-white transition-colors">
+            Back to login
+          </button>
         </p>
       </form>
     </AuthCard>

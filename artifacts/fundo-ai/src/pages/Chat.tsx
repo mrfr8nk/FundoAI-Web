@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Send, Loader2, Bot, User, Trash2, MessageCircle, Sparkles, Globe,
-  Zap, ChevronRight, Lock, ArrowRight, X, Paperclip, Image as ImageIcon,
+  Send, Loader2, Bot, User, Trash2, MessageCircle, Globe,
+  Zap, X, Paperclip, Image as ImageIcon,
   FileText, FileType2, Clock, History, ChevronLeft, KeyRound, LogOut, Eye, EyeOff,
+  Lock, ArrowRight,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
@@ -29,7 +30,7 @@ interface AttachedFile {
   charCount?: number;
 }
 
-/* ── Markdown renderer ─────────────────────────────────── */
+/* ── Markdown renderer ── */
 function Markdown({ text }: { text: string }) {
   return (
     <div className="text-sm leading-relaxed space-y-1">
@@ -38,7 +39,12 @@ function Markdown({ text }: { text: string }) {
         if (!t) return <div key={i} className="h-1" />;
         const bold = t.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
         if (t.startsWith("• ") || t.startsWith("- "))
-          return <div key={i} className="flex gap-2 items-start pl-1"><span style={{ color: "#a855f7", marginTop: 2 }}>•</span><span dangerouslySetInnerHTML={{ __html: bold.replace(/^[•\-]\s/, "") }} /></div>;
+          return (
+            <div key={i} className="flex gap-2 items-start pl-1">
+              <span className="text-violet-400 mt-0.5">•</span>
+              <span dangerouslySetInnerHTML={{ __html: bold.replace(/^[•\-]\s/, "") }} />
+            </div>
+          );
         if (/^#{1,3}\s/.test(t))
           return <div key={i} className="font-bold text-white mt-2" dangerouslySetInnerHTML={{ __html: bold.replace(/^#+\s/, "") }} />;
         return <div key={i} dangerouslySetInnerHTML={{ __html: bold }} />;
@@ -47,7 +53,7 @@ function Markdown({ text }: { text: string }) {
   );
 }
 
-/* ── Date group label ──────────────────────────────────── */
+/* ── Date helpers ── */
 function dateLabel(ts: number) {
   const d = new Date(ts), now = new Date();
   const diff = Math.floor((now.getTime() - d.getTime()) / 86400000);
@@ -56,115 +62,117 @@ function dateLabel(ts: number) {
   if (diff < 7) return d.toLocaleDateString("en-GB", { weekday: "long" });
   return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
-
 function dayKey(ts: number) {
   const d = new Date(ts);
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
 }
 
-/* ── Suggested prompts ─────────────────────────────────── */
+/* ── Suggested prompts ── */
 const SUGGESTED = [
-  "What is photosynthesis? 🌿", "Help me with O-Level Maths 📐",
-  "Explain the Zimbabwe Civil War 📚", "Write a poem about Zimbabwe 🇿🇼",
-  "What's the weather in Harare? 🌤️", "Solve: 2x + 5 = 13 🔢",
+  "What is photosynthesis?",
+  "Help me with O-Level Maths",
+  "Explain the Zimbabwe Civil War",
+  "Solve: 2x + 5 = 13",
+  "What's the weather in Harare?",
+  "Write a poem about Zimbabwe",
 ];
 
-/* ── Guest wall modal ──────────────────────────────────── */
+/* ── Guest wall modal ── */
 function GuestWall({ onClose }: { onClose: () => void }) {
   const [, nav] = useLocation();
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(6,3,15,0.88)", backdropFilter: "blur(16px)" }}>
-      <div className="relative w-full max-w-md rounded-3xl p-8 text-center" style={{ background: "rgba(15,10,30,0.98)", border: "1px solid rgba(168,85,247,0.25)", boxShadow: "0 0 80px rgba(168,85,247,0.18), 0 32px 80px rgba(0,0,0,0.7)" }}>
-        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center" style={{ color: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.05)" }}><X size={14} /></button>
-        <div className="w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5" style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.2),rgba(124,58,237,0.12))", border: "1px solid rgba(168,85,247,0.25)", boxShadow: "0 0 40px rgba(168,85,247,0.2)" }}>
-          <Lock size={36} style={{ color: "#a855f7" }} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(9,9,13,0.85)", backdropFilter: "blur(16px)" }}>
+      <div className="relative w-full max-w-md rounded-2xl p-8 text-center" style={{ background: "#111117", border: "1px solid #1e1e2b" }}>
+        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-lg flex items-center justify-center transition-colors" style={{ color: "#6b6b85", background: "#1a1a27" }}>
+          <X size={14} />
+        </button>
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5" style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.2)" }}>
+          <Lock size={28} className="text-violet-400" />
         </div>
-        <h2 className="text-2xl font-black text-white mb-2">You've used your 5 free messages</h2>
-        <p className="text-sm mb-6 leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>Create a free account to unlock unlimited AI chat, file uploads, and your full learning history.</p>
-        <div className="space-y-2 mb-7 text-left">
-          {[["🧠","Unlimited AI conversations"],["📄","Upload PDFs, images & Word docs"],["💾","Chat history saved across sessions"],["🎓","Full ZIMSEC curriculum alignment"]].map(([icon,text]) => (
-            <div key={text} className="flex items-center gap-3 px-4 py-2.5 rounded-xl" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
-              <span className="text-base">{icon}</span>
-              <span className="text-sm font-medium" style={{ color: "rgba(255,255,255,0.7)" }}>{text}</span>
+        <h2 className="text-xl font-black text-white mb-2">You've used your 5 free messages</h2>
+        <p className="text-sm mb-6 leading-relaxed" style={{ color: "#8888a0" }}>
+          Create a free account to unlock unlimited AI chat, file uploads, and your full learning history.
+        </p>
+        <div className="space-y-2 mb-6 text-left">
+          {[["Unlimited AI conversations"], ["Upload PDFs, images & Word docs"], ["Chat history saved across sessions"], ["Full ZIMSEC curriculum alignment"]].map(([text]) => (
+            <div key={text} className="flex items-center gap-3 px-3 py-2.5 rounded-xl" style={{ background: "#1a1a27", border: "1px solid #1e1e2b" }}>
+              <div className="w-1.5 h-1.5 rounded-full bg-violet-400 flex-shrink-0" />
+              <span className="text-sm font-medium" style={{ color: "#a0a0bc" }}>{text}</span>
             </div>
           ))}
         </div>
-        <div className="flex flex-col gap-3">
-          <button onClick={() => nav("/signup")} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 20px rgba(168,85,247,0.4)" }}>
-            <Bot size={16} />Create free account <ArrowRight size={15} />
+        <div className="flex flex-col gap-2">
+          <button onClick={() => nav("/signup")}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold text-white bg-violet-600 hover:bg-violet-500 transition-colors">
+            <Bot size={15} /> Create free account <ArrowRight size={14} />
           </button>
-          <button onClick={() => nav("/login")} className="w-full py-3 rounded-xl text-sm font-medium" style={{ color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            Already have an account? <span style={{ color: "#a855f7" }}>Log in</span>
+          <button onClick={() => nav("/login")}
+            className="w-full py-3 rounded-xl text-sm font-medium transition-colors"
+            style={{ color: "#6b6b85", background: "#1a1a27", border: "1px solid #1e1e2b" }}>
+            Already have an account? <span className="text-violet-400">Log in</span>
           </button>
         </div>
-        <p className="mt-4 text-xs" style={{ color: "rgba(255,255,255,0.25)" }}>Free forever · No credit card needed · 🇿🇼</p>
+        <p className="mt-4 text-xs" style={{ color: "#3a3a50" }}>Free forever · No credit card · 🇿🇼</p>
       </div>
     </div>
   );
 }
 
-/* ── History sidebar ───────────────────────────────────── */
+/* ── History sidebar ── */
 function HistorySidebar({ messages, onClose, onClearAll, clearing }: {
   messages: Msg[];
   onClose: () => void;
   onClearAll: () => void;
   clearing: boolean;
 }) {
-  // Group messages by day (only user messages to create titles)
   const groups: { key: string; label: string; ts: number; preview: string; count: number }[] = [];
   const seen = new Set<string>();
-
   messages.forEach(m => {
     if (m.role !== "user" || !m.ts) return;
     const k = dayKey(m.ts);
     if (seen.has(k)) return;
     seen.add(k);
     const label = dateLabel(m.ts);
-    const preview = m.fileName
-      ? `📎 ${m.fileName}`
-      : m.content.substring(0, 50) + (m.content.length > 50 ? "…" : "");
+    const preview = m.fileName ? `📎 ${m.fileName}` : m.content.substring(0, 50) + (m.content.length > 50 ? "…" : "");
     const count = messages.filter(x => x.role === "user" && x.ts && dayKey(x.ts) === k).length;
     groups.push({ key: k, label, ts: m.ts, preview, count });
   });
   groups.reverse();
 
   return (
-    <div className="flex flex-col h-full" style={{ background: "rgba(8,5,17,0.98)", borderRight: "1px solid rgba(255,255,255,0.07)" }}>
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+    <div className="flex flex-col h-full" style={{ background: "#0d0d14", borderRight: "1px solid #1e1e2b" }}>
+      <div className="flex items-center justify-between px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid #1e1e2b" }}>
         <div className="flex items-center gap-2">
-          <History size={15} style={{ color: "#a855f7" }} />
-          <span className="text-sm font-bold text-white">Chat History</span>
+          <History size={14} className="text-violet-400" />
+          <span className="text-sm font-semibold text-white">Chat History</span>
         </div>
-        <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ color: "rgba(255,255,255,0.35)", background: "rgba(255,255,255,0.05)" }}>
+        <button onClick={onClose} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style={{ color: "#6b6b85", background: "#1a1a27" }}>
           <ChevronLeft size={14} />
         </button>
       </div>
 
-      {/* Groups */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-1" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
+      <div className="flex-1 overflow-y-auto p-3 space-y-2" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(139,92,246,0.3) transparent" }}>
         {groups.length === 0 ? (
-          <div className="text-center py-8 text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>No chat history yet</div>
+          <div className="text-center py-8 text-xs" style={{ color: "#4a4a62" }}>No chat history yet</div>
         ) : (
           groups.map(g => (
-            <div key={g.key} className="px-3 py-2.5 rounded-xl cursor-default" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <div key={g.key} className="px-3 py-2.5 rounded-xl cursor-default" style={{ background: "#111117", border: "1px solid #1e1e2b" }}>
               <div className="flex items-center gap-1.5 mb-1">
-                <Clock size={10} style={{ color: "#a855f7" }} />
-                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#a855f7" }}>{g.label}</span>
-                <span className="text-[10px] ml-auto" style={{ color: "rgba(255,255,255,0.2)" }}>{g.count} msg{g.count !== 1 ? "s" : ""}</span>
+                <Clock size={10} className="text-violet-400" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-violet-400">{g.label}</span>
+                <span className="text-[10px] ml-auto" style={{ color: "#3a3a50" }}>{g.count} msg{g.count !== 1 ? "s" : ""}</span>
               </div>
-              <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{g.preview}</p>
+              <p className="text-xs leading-relaxed" style={{ color: "#6b6b85" }}>{g.preview}</p>
             </div>
           ))
         )}
       </div>
 
-      {/* Footer */}
       {messages.length > 0 && (
-        <div className="p-3 flex-shrink-0" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+        <div className="p-3 flex-shrink-0" style={{ borderTop: "1px solid #1e1e2b" }}>
           <button onClick={onClearAll} disabled={clearing}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold transition-all"
-            style={{ color: "#f87171", background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.15)" }}>
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold transition-colors"
+            style={{ color: "#f87171", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
             {clearing ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
             Clear all history
           </button>
@@ -174,7 +182,7 @@ function HistorySidebar({ messages, onClose, onClearAll, clearing }: {
   );
 }
 
-/* ── Set Password Modal ────────────────────────────────── */
+/* ── Set Password Modal ── */
 function SetPasswordModal({ hasPassword, onClose }: { hasPassword: boolean; onClose: () => void }) {
   const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirm: "" });
   const [showPw, setShowPw] = useState(false);
@@ -191,73 +199,78 @@ function SetPasswordModal({ hasPassword, onClose }: { hasPassword: boolean; onCl
     try {
       await api.setPassword({ newPassword: form.newPassword, currentPassword: form.currentPassword || undefined });
       setDone(true);
-    } catch (err: any) {
-      setError(err.message);
-    } finally { setLoading(false); }
+    } catch (err: any) { setError(err.message); }
+    finally { setLoading(false); }
   }
 
-  const inp = (style?: object) => ({
-    background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-    ...style,
-  });
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(6,3,15,0.88)", backdropFilter: "blur(16px)" }}>
-      <div className="relative w-full max-w-sm rounded-3xl p-7" style={{ background: "rgba(15,10,30,0.98)", border: "1px solid rgba(168,85,247,0.25)", boxShadow: "0 0 80px rgba(168,85,247,0.18), 0 32px 80px rgba(0,0,0,0.7)" }}>
-        <button onClick={onClose} className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center" style={{ color: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.05)" }}><X size={14} /></button>
-        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5" style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.2),rgba(124,58,237,0.12))", border: "1px solid rgba(168,85,247,0.25)" }}>
-          <KeyRound size={24} style={{ color: "#a855f7" }} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: "rgba(9,9,13,0.85)", backdropFilter: "blur(16px)" }}>
+      <div className="relative w-full max-w-sm rounded-2xl p-7" style={{ background: "#111117", border: "1px solid #1e1e2b" }}>
+        <button onClick={onClose} className="absolute top-4 right-4 w-7 h-7 rounded-lg flex items-center justify-center" style={{ color: "#6b6b85", background: "#1a1a27" }}>
+          <X size={13} />
+        </button>
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.2)" }}>
+          <KeyRound size={22} className="text-violet-400" />
         </div>
-        <h2 className="text-xl font-black text-white mb-1">{hasPassword ? "Change Password" : "Set a Password"}</h2>
-        <p className="text-xs mb-5" style={{ color: "rgba(255,255,255,0.4)" }}>
-          {hasPassword ? "Enter your current password to change it." : "Add a password so you can also log in without a magic link."}
+        <h2 className="text-lg font-bold text-white mb-1">{hasPassword ? "Change Password" : "Set a Password"}</h2>
+        <p className="text-xs mb-5" style={{ color: "#6b6b85" }}>
+          {hasPassword ? "Enter your current password to change it." : "Add a password so you can sign in without a magic link."}
         </p>
 
         {done ? (
           <div className="text-center py-4">
             <div className="text-3xl mb-3">✅</div>
             <p className="text-sm font-semibold text-white mb-1">Password {hasPassword ? "changed" : "set"}!</p>
-            <p className="text-xs mb-5" style={{ color: "rgba(255,255,255,0.4)" }}>You can now sign in with email + password.</p>
-            <button onClick={onClose} className="w-full py-2.5 rounded-xl text-sm font-bold text-white" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)" }}>Done</button>
+            <p className="text-xs mb-5" style={{ color: "#6b6b85" }}>You can now sign in with email + password.</p>
+            <button onClick={onClose} className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-violet-600 hover:bg-violet-500 transition-colors">Done</button>
           </div>
         ) : (
           <form onSubmit={submit} className="space-y-3">
-            {error && <div className="px-3 py-2.5 rounded-xl text-xs font-medium" style={{ background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.25)", color: "#fca5a5" }}>{error}</div>}
+            {error && (
+              <div className="px-3 py-2.5 rounded-xl text-xs font-medium" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
+                {error}
+              </div>
+            )}
             {hasPassword && (
               <div>
-                <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>Current password</label>
+                <label className="block text-xs font-semibold mb-1.5" style={{ color: "#6b6b85" }}>Current password</label>
                 <input type={showPw ? "text" : "password"} value={form.currentPassword}
                   onChange={e => setForm(f => ({ ...f, currentPassword: e.target.value }))}
                   placeholder="••••••••" required
-                  className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none"
-                  style={inp()} />
+                  className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-200"
+                  style={{ background: "#1a1a27", border: "1px solid #1e1e2b" }}
+                  onFocus={e => { e.target.style.borderColor = "rgba(139,92,246,0.5)"; }}
+                  onBlur={e => { e.target.style.borderColor = "#1e1e2b"; }} />
               </div>
             )}
             <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>New password</label>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: "#6b6b85" }}>New password</label>
               <div className="relative">
                 <input type={showPw ? "text" : "password"} value={form.newPassword}
                   onChange={e => setForm(f => ({ ...f, newPassword: e.target.value }))}
                   placeholder="Min. 6 characters" required
-                  className="w-full px-4 pr-10 py-2.5 rounded-xl text-sm text-white outline-none"
-                  style={inp()} />
+                  className="w-full px-3 pr-10 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-200"
+                  style={{ background: "#1a1a27", border: "1px solid #1e1e2b" }}
+                  onFocus={e => { e.target.style.borderColor = "rgba(139,92,246,0.5)"; }}
+                  onBlur={e => { e.target.style.borderColor = "#1e1e2b"; }} />
                 <button type="button" onClick={() => setShowPw(s => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#6b6b85" }}>
                   {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold mb-1.5" style={{ color: "rgba(255,255,255,0.55)" }}>Confirm password</label>
+              <label className="block text-xs font-semibold mb-1.5" style={{ color: "#6b6b85" }}>Confirm password</label>
               <input type={showPw ? "text" : "password"} value={form.confirm}
                 onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))}
                 placeholder="Repeat new password" required
-                className="w-full px-4 py-2.5 rounded-xl text-sm text-white outline-none"
-                style={inp()} />
+                className="w-full px-3 py-2.5 rounded-xl text-sm text-white outline-none transition-all duration-200"
+                style={{ background: "#1a1a27", border: "1px solid #1e1e2b" }}
+                onFocus={e => { e.target.style.borderColor = "rgba(139,92,246,0.5)"; }}
+                onBlur={e => { e.target.style.borderColor = "#1e1e2b"; }} />
             </div>
             <button type="submit" disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white mt-1"
-              style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 16px rgba(168,85,247,0.35)", opacity: loading ? 0.7 : 1 }}>
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white bg-violet-600 hover:bg-violet-500 transition-colors mt-1 disabled:opacity-60">
               {loading ? <Loader2 size={15} className="animate-spin" /> : <><KeyRound size={14} />{hasPassword ? "Change Password" : "Set Password"}</>}
             </button>
           </form>
@@ -267,29 +280,34 @@ function SetPasswordModal({ hasPassword, onClose }: { hasPassword: boolean; onCl
   );
 }
 
-/* ── File chip in input ────────────────────────────────── */
+/* ── File chip ── */
 function FileChip({ file, onRemove }: { file: AttachedFile; onRemove: () => void }) {
-  const icon = file.type === "image" ? <ImageIcon size={13} style={{ color: "#06b6d4" }} />
-    : file.type === "pdf" ? <FileText size={13} style={{ color: "#f59e0b" }} />
-    : <FileType2 size={13} style={{ color: "#10b981" }} />;
-  const color = file.type === "image" ? "rgba(6,182,212,0.12)" : file.type === "pdf" ? "rgba(245,158,11,0.12)" : "rgba(16,185,129,0.12)";
-  const border = file.type === "image" ? "rgba(6,182,212,0.25)" : file.type === "pdf" ? "rgba(245,158,11,0.25)" : "rgba(16,185,129,0.25)";
-
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl max-w-xs" style={{ background: color, border: `1px solid ${border}` }}>
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl max-w-xs"
+      style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
       {file.type === "image" && file.dataUrl ? (
-        <img src={file.dataUrl} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0" />
-      ) : icon}
-      <span className="text-xs font-medium truncate" style={{ color: "rgba(255,255,255,0.8)", maxWidth: 140 }}>{file.name}</span>
-      {file.charCount && <span className="text-[10px] flex-shrink-0" style={{ color: "rgba(255,255,255,0.3)" }}>{(file.charCount / 1000).toFixed(1)}k chars</span>}
-      <button onClick={onRemove} className="ml-auto flex-shrink-0" style={{ color: "rgba(255,255,255,0.35)" }}>
+        <img src={file.dataUrl} alt="" className="w-5 h-5 rounded object-cover flex-shrink-0" />
+      ) : file.type === "image" ? (
+        <ImageIcon size={13} className="text-violet-400" />
+      ) : file.type === "pdf" ? (
+        <FileText size={13} className="text-violet-400" />
+      ) : (
+        <FileType2 size={13} className="text-violet-400" />
+      )}
+      <span className="text-xs font-medium truncate" style={{ color: "#a0a0bc", maxWidth: 140 }}>{file.name}</span>
+      {file.charCount && (
+        <span className="text-[10px] flex-shrink-0" style={{ color: "#4a4a62" }}>
+          {(file.charCount / 1000).toFixed(1)}k chars
+        </span>
+      )}
+      <button onClick={onRemove} className="ml-auto flex-shrink-0" style={{ color: "#6b6b85" }}>
         <X size={12} />
       </button>
     </div>
   );
 }
 
-/* ── Main Chat page ────────────────────────────────────── */
+/* ── Main Chat page ── */
 export default function Chat() {
   const { user, loading: authLoading } = useAuth();
   const [, nav] = useLocation();
@@ -354,7 +372,6 @@ export default function Chat() {
 
     setInput("");
 
-    // Build what to show in chat and what to send to AI
     let displayContent = msg;
     let aiMessage = msg;
     let imageBase64: string | undefined;
@@ -416,302 +433,326 @@ export default function Chat() {
   return (
     <PageLayout>
       {showWall && <GuestWall onClose={() => setShowWall(false)} />}
-      {showSetPw && <SetPasswordModal hasPassword={hasPassword} onClose={() => { setShowSetPw(false); api.me().then(d => setHasPassword(!!d.user?.hasPassword)).catch(() => {}); }} />}
+      {showSetPw && (
+        <SetPasswordModal hasPassword={hasPassword} onClose={() => {
+          setShowSetPw(false);
+          api.me().then(d => setHasPassword(!!d.user?.hasPassword)).catch(() => {});
+        }} />
+      )}
       {showUserMenu && <div className="fixed inset-0 z-30" onClick={() => setShowUserMenu(false)} />}
 
-      {/* Hidden file input */}
       <input ref={fileInputRef} type="file" className="hidden"
         accept="image/*,.pdf,.doc,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         onChange={handleFileSelect} />
 
       <div className="flex" style={{ height: "calc(100vh - 68px)" }}>
 
-        {/* History Sidebar */}
+        {/* Sidebar */}
         {showHistory && user && (
-          <div className="flex-shrink-0 w-64 hidden sm:flex flex-col" style={{ borderRight: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="flex-shrink-0 w-60 hidden sm:flex flex-col" style={{ borderRight: "1px solid #1e1e2b" }}>
             <HistorySidebar messages={messages} onClose={() => setShowHistory(false)} onClearAll={clearHistory} clearing={clearing} />
           </div>
         )}
 
-        {/* Main chat area */}
+        {/* Main area */}
         <div className="flex-1 flex flex-col min-w-0">
 
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 sm:px-6 py-3 flex-shrink-0" style={{ background: "rgba(255,255,255,0.025)", borderBottom: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(20px)" }}>
-            <div className="flex items-center gap-3">
+          {/* Chat header */}
+          <div className="flex items-center justify-between px-4 sm:px-5 py-3 flex-shrink-0"
+            style={{ background: "#0d0d14", borderBottom: "1px solid #1e1e2b" }}>
+            <div className="flex items-center gap-2.5">
               {user && (
                 <button onClick={() => setShowHistory(h => !h)}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center mr-1 transition-all"
-                  style={{ color: showHistory ? "#a855f7" : "rgba(255,255,255,0.35)", background: showHistory ? "rgba(168,85,247,0.12)" : "rgba(255,255,255,0.05)", border: `1px solid ${showHistory ? "rgba(168,85,247,0.25)" : "rgba(255,255,255,0.08)"}` }}
+                  className="w-8 h-8 rounded-lg flex items-center justify-center mr-1 transition-colors"
+                  style={{
+                    color: showHistory ? "#a78bfa" : "#6b6b85",
+                    background: showHistory ? "rgba(139,92,246,0.12)" : "#1a1a27",
+                    border: `1px solid ${showHistory ? "rgba(139,92,246,0.25)" : "#1e1e2b"}`,
+                  }}
                   title="Chat history">
-                  <History size={14} />
+                  <History size={15} />
                 </button>
               )}
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 0 14px rgba(168,85,247,0.4)" }}>
-                <Bot size={18} className="text-white" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600 flex-shrink-0">
+                <Bot size={16} className="text-white" />
               </div>
               <div>
-                <div className="text-sm font-bold text-white">FUNDO AI 🤖</div>
+                <div className="text-sm font-semibold text-white">FUNDO AI</div>
                 <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-                  <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>Online · Llama 4 Scout · Vision</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="text-xs text-emerald-400">Online</span>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              {!user && !authLoading && guestCount > 0 && (
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
-                  style={{ background: remainingGuest === 0 ? "rgba(239,68,68,0.1)" : "rgba(168,85,247,0.1)", border: `1px solid ${remainingGuest === 0 ? "rgba(239,68,68,0.25)" : "rgba(168,85,247,0.25)"}`, color: remainingGuest === 0 ? "#fca5a5" : "#c084fc" }}>
-                  {remainingGuest === 0 ? "⚠️ Limit reached" : `${remainingGuest} left`}
+              {!user && remainingGuest !== null && (
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{ color: remainingGuest <= 2 ? "#fbbf24" : "#6b6b85", background: "#1a1a27", border: "1px solid #1e1e2b" }}>
+                  <Zap size={11} />
+                  {remainingGuest === 0 ? "No free messages left" : `${remainingGuest} free message${remainingGuest !== 1 ? "s" : ""} left`}
                 </div>
               )}
-              {!user && (
-                <button onClick={() => nav("/signup")} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
-                  style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 2px 10px rgba(168,85,247,0.3)" }}>
-                  Sign up free
-                </button>
-              )}
+
               {user && (
                 <div className="relative">
-                  <button onClick={() => setShowUserMenu(m => !m)}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all"
-                    style={{ background: showUserMenu ? "rgba(168,85,247,0.15)" : "rgba(255,255,255,0.05)", border: `1px solid ${showUserMenu ? "rgba(168,85,247,0.3)" : "rgba(255,255,255,0.08)"}` }}>
-                    <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold text-white"
-                      style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)" }}>
-                      {user.name.charAt(0).toUpperCase()}
+                  <button onClick={() => setShowUserMenu(o => !o)}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    style={{ color: "#8888a0", background: "#1a1a27", border: "1px solid #1e1e2b" }}>
+                    <div className="w-5 h-5 rounded-md bg-violet-600 flex items-center justify-center flex-shrink-0">
+                      <User size={11} className="text-white" />
                     </div>
-                    <span className="hidden sm:block text-xs font-semibold text-white max-w-[80px] truncate">{user.name.split(" ")[0]}</span>
+                    <span className="hidden sm:block max-w-[120px] truncate">{user.name || user.email}</span>
                   </button>
+
                   {showUserMenu && (
-                    <div className="absolute right-0 top-full mt-1.5 w-44 rounded-2xl overflow-hidden z-40"
-                      style={{ background: "rgba(15,10,30,0.98)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.7)" }}>
-                      <button onClick={() => { setShowSetPw(true); setShowUserMenu(false); }}
-                        className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-semibold transition-colors text-left"
-                        style={{ color: "rgba(255,255,255,0.75)" }}
-                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(168,85,247,0.1)"; e.currentTarget.style.color = "#fff"; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}>
-                        <KeyRound size={13} style={{ color: "#a855f7" }} />
-                        {hasPassword ? "Change Password" : "Set Password"}
-                      </button>
-                      <div style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
-                      <button onClick={() => { localStorage.removeItem("fundo_token"); window.location.href = "/login"; }}
-                        className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-semibold transition-colors text-left"
-                        style={{ color: "rgba(255,255,255,0.75)" }}
-                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#fca5a5"; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = ""; e.currentTarget.style.color = "rgba(255,255,255,0.75)"; }}>
-                        <LogOut size={13} style={{ color: "#f87171" }} />
-                        Sign out
-                      </button>
+                    <div className="absolute right-0 top-full mt-2 w-52 rounded-xl overflow-hidden z-50 slide-down"
+                      style={{ background: "#111117", border: "1px solid #1e1e2b" }}>
+                      <div className="px-4 py-3" style={{ borderBottom: "1px solid #1e1e2b" }}>
+                        <p className="text-xs font-semibold text-white truncate">{user.name}</p>
+                        <p className="text-xs truncate" style={{ color: "#6b6b85" }}>{user.email}</p>
+                      </div>
+                      <div className="p-1.5 space-y-0.5">
+                        <button onClick={() => { setShowSetPw(true); setShowUserMenu(false); }}
+                          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left"
+                          style={{ color: "#8888a0" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#1a1a27"; (e.currentTarget as HTMLElement).style.color = "#fff"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#8888a0"; }}>
+                          <KeyRound size={13} />
+                          {hasPassword ? "Change password" : "Set a password"}
+                        </button>
+                        <button onClick={() => { clearHistory(); setShowUserMenu(false); }}
+                          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left"
+                          style={{ color: "#8888a0" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#1a1a27"; (e.currentTarget as HTMLElement).style.color = "#f87171"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#8888a0"; }}>
+                          <Trash2 size={13} />
+                          Clear chat history
+                        </button>
+                      </div>
+                      <div className="p-1.5" style={{ borderTop: "1px solid #1e1e2b" }}>
+                        <button onClick={() => { nav("/"); setShowUserMenu(false); }}
+                          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left"
+                          style={{ color: "#8888a0" }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#1a1a27"; (e.currentTarget as HTMLElement).style.color = "#fff"; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#8888a0"; }}>
+                          <LogOut size={13} />
+                          Exit to home
+                        </button>
+                      </div>
                     </div>
                   )}
+                </div>
+              )}
+
+              {!user && (
+                <div className="flex items-center gap-2">
+                  <button onClick={() => nav("/login")}
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    style={{ color: "#8888a0" }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#fff")}
+                    onMouseLeave={e => (e.currentTarget.style.color = "#8888a0")}>
+                    Log in
+                  </button>
+                  <button onClick={() => nav("/signup")}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-violet-600 hover:bg-violet-500 transition-colors">
+                    Sign up
+                  </button>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Guest banner */}
-          {!user && !authLoading && (
-            <div className="mx-4 mt-3 px-4 py-2.5 rounded-xl flex items-center justify-between flex-shrink-0"
-              style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.2)" }}>
-              <div className="flex items-center gap-2 text-xs" style={{ color: "rgba(255,255,255,0.6)" }}>
-                <Sparkles size={13} style={{ color: "#a855f7" }} />
-                <span>
-                  {guestCount === 0 ? `Guest mode — ${GUEST_LIMIT} free messages`
-                    : remainingGuest === 0 ? "Free messages used — create an account to continue"
-                    : `${remainingGuest} free message${remainingGuest === 1 ? "" : "s"} remaining`}
-                </span>
-              </div>
-              <button onClick={() => nav("/signup")} className="flex items-center gap-1 text-xs font-semibold" style={{ color: "#a855f7" }}>
-                Sign up <ChevronRight size={12} />
-              </button>
-            </div>
-          )}
-
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
-            {histLoading && <div className="flex justify-center pt-8"><Loader2 size={24} className="animate-spin" style={{ color: "#a855f7" }} /></div>}
-
-            {isEmpty && !histLoading && (
-              <div className="flex flex-col items-center justify-center h-full min-h-[300px] text-center px-4 py-8">
-                <div className="w-20 h-20 rounded-3xl flex items-center justify-center mb-6" style={{ background: "linear-gradient(135deg,rgba(168,85,247,0.2),rgba(124,58,237,0.12))", border: "1px solid rgba(168,85,247,0.2)", boxShadow: "0 0 40px rgba(168,85,247,0.15)" }}>
-                  <Bot size={40} style={{ color: "#a855f7" }} />
+          <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(139,92,246,0.3) transparent" }}>
+            {histLoading ? (
+              <div className="flex items-center justify-center h-full gap-3">
+                <Loader2 size={18} className="animate-spin text-violet-400" />
+                <span className="text-sm" style={{ color: "#6b6b85" }}>Loading history…</span>
+              </div>
+            ) : isEmpty ? (
+              /* Empty state */
+              <div className="flex flex-col items-center justify-center h-full px-4 py-8 text-center">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-violet-600 mb-5">
+                  <MessageCircle size={28} className="text-white" />
                 </div>
-                <h2 className="text-xl font-bold text-white mb-2">Hey{user ? ` ${user.name.split(" ")[0]}` : ""}! I'm FUNDO AI 🤖🔥</h2>
-                <p className="text-sm mb-6" style={{ color: "rgba(255,255,255,0.45)", maxWidth: 340 }}>Zimbabwe's most powerful AI study assistant. Ask me anything, or upload a document to get started.</p>
-                <div className="flex flex-wrap gap-2 justify-center max-w-lg mb-4">
+                <h2 className="text-xl font-bold text-white mb-2">Ask FUNDO AI anything</h2>
+                <p className="text-sm mb-8 max-w-xs" style={{ color: "#6b6b85" }}>
+                  From ZIMSEC past papers to live web search — I'm here to help you learn.
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center max-w-lg">
                   {SUGGESTED.map(s => (
                     <button key={s} onClick={() => send(s)}
-                      className="px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-200"
-                      style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.65)" }}
-                      onMouseEnter={e => { e.currentTarget.style.background = "rgba(168,85,247,0.12)"; e.currentTarget.style.borderColor = "rgba(168,85,247,0.3)"; e.currentTarget.style.color = "#fff"; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.09)"; e.currentTarget.style.color = "rgba(255,255,255,0.65)"; }}>
+                      className="px-3.5 py-2 rounded-xl text-xs font-medium transition-colors"
+                      style={{ background: "#111117", border: "1px solid #1e1e2b", color: "#8888a0" }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(139,92,246,0.3)"; (e.currentTarget as HTMLElement).style.color = "#fff"; }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "#1e1e2b"; (e.currentTarget as HTMLElement).style.color = "#8888a0"; }}>
                       {s}
                     </button>
                   ))}
                 </div>
-                <div className="flex flex-wrap gap-2 justify-center">
-                  {[{ icon: Globe, label: "Web search" }, { icon: Zap, label: "Real-time data" }, { icon: MessageCircle, label: "ZIMSEC" }, { icon: ImageIcon, label: "Images" }, { icon: FileText, label: "PDF & Word" }].map(({ icon: Icon, label }) => (
-                    <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.35)" }}>
-                      <Icon size={11} />{label}
-                    </div>
-                  ))}
-                </div>
+                {!user && (
+                  <p className="mt-8 text-xs" style={{ color: "#4a4a62" }}>
+                    {remainingGuest} free message{remainingGuest !== 1 ? "s" : ""} remaining · <button onClick={() => nav("/signup")} className="text-violet-400 underline">Create account</button> for unlimited
+                  </p>
+                )}
               </div>
-            )}
-
-            {messages.map((msg, i) => {
-              // Date separator
-              const showDate = msg.role === "user" && msg.ts && (i === 0 || (messages[i - 2]?.ts && dayKey(msg.ts) !== dayKey(messages[i - 2].ts!)));
-              return (
-                <div key={i}>
-                  {showDate && msg.ts && (
-                    <div className="flex items-center gap-3 my-3">
-                      <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
-                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ color: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}>{dateLabel(msg.ts)}</span>
-                      <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.06)" }} />
+            ) : (
+              /* Message list */
+              <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
+                {messages.map((msg, i) => (
+                  <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      {msg.role === "assistant" ? (
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600">
+                          <Bot size={15} className="text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "#1a1a27", border: "1px solid #1e1e2b" }}>
+                          <User size={15} style={{ color: "#8888a0" }} />
+                        </div>
+                      )}
                     </div>
-                  )}
-                  <div className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                    {msg.role === "assistant" && (
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 0 10px rgba(168,85,247,0.35)" }}>
-                        <Bot size={15} className="text-white" />
-                      </div>
-                    )}
-                    <div className={`max-w-[78%] sm:max-w-[70%] rounded-2xl ${msg.role === "user" ? "rounded-tr-sm" : "rounded-tl-sm"}`}
-                      style={msg.role === "user"
-                        ? { background: "linear-gradient(135deg,#a855f7,#7c3aed)", color: "#fff" }
-                        : { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.88)" }}>
-                      {/* Image attachment in message */}
+
+                    {/* Bubble */}
+                    <div className={`flex flex-col gap-1 max-w-[75%] ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                      {/* Image preview */}
                       {msg.imageDataUrl && (
-                        <div className="p-2 pb-0">
-                          <img src={msg.imageDataUrl} alt={msg.fileName || "uploaded"} className="rounded-xl max-h-48 max-w-full object-cover" />
-                        </div>
+                        <img src={msg.imageDataUrl} alt="uploaded" className="rounded-xl max-w-[200px] max-h-[200px] object-cover mb-1" />
                       )}
-                      {/* File tag */}
+                      {/* File chip */}
                       {msg.fileName && !msg.imageDataUrl && (
-                        <div className="px-4 pt-3 pb-0 flex items-center gap-2">
-                          {msg.fileType === "pdf" ? <FileText size={13} style={{ color: "#f59e0b" }} /> : <FileType2 size={13} style={{ color: "#10b981" }} />}
-                          <span className="text-xs font-medium opacity-80">{msg.fileName}</span>
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl mb-1"
+                          style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
+                          {msg.fileType === "pdf" ? <FileText size={13} className="text-violet-400" /> : <FileType2 size={13} className="text-violet-400" />}
+                          <span className="text-xs font-medium" style={{ color: "#a0a0bc" }}>{msg.fileName}</span>
                         </div>
                       )}
-                      <div className="px-4 py-3">
-                        {msg.role === "user"
-                          ? <p className="text-sm leading-relaxed">{msg.content}</p>
-                          : <Markdown text={msg.content} />}
+                      <div
+                        className="px-4 py-3 rounded-2xl"
+                        style={{
+                          background: msg.role === "user" ? "#7c3aed" : "#111117",
+                          border: msg.role === "user" ? "none" : "1px solid #1e1e2b",
+                          borderRadius: msg.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                        }}
+                      >
+                        {msg.role === "assistant" ? (
+                          <Markdown text={msg.content} />
+                        ) : (
+                          <p className="text-sm text-white leading-relaxed">{msg.content}</p>
+                        )}
+                      </div>
+                      {msg.ts && (
+                        <span className="text-[10px] px-1" style={{ color: "#3a3a50" }}>
+                          {new Date(msg.ts).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {/* Typing indicator */}
+                {thinking && (
+                  <div className="flex gap-3">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-600 flex-shrink-0">
+                      <Bot size={15} className="text-white" />
+                    </div>
+                    <div className="px-4 py-3 rounded-2xl" style={{ background: "#111117", border: "1px solid #1e1e2b", borderRadius: "18px 18px 18px 4px" }}>
+                      <div className="flex gap-1 items-center h-5">
+                        {[0, 1, 2].map(i => (
+                          <div key={i} className="w-1.5 h-1.5 rounded-full bg-violet-400"
+                            style={{ animation: `dot-bounce 1s ease-in-out ${i * 0.18}s infinite` }} />
+                        ))}
                       </div>
                     </div>
-                    {msg.role === "user" && (
-                      <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.12)" }}>
-                        <User size={15} className="text-white" />
-                      </div>
-                    )}
                   </div>
-                </div>
-              );
-            })}
-
-            {thinking && (
-              <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 0 10px rgba(168,85,247,0.35)" }}>
-                  <Bot size={15} className="text-white" />
-                </div>
-                <div className="px-4 py-3 rounded-2xl rounded-tl-sm" style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.09)" }}>
-                  <div className="flex gap-1 items-center">
-                    {[0, 1, 2].map(i => <div key={i} className="w-2 h-2 rounded-full" style={{ background: "#a855f7", animation: `bounce 1.2s ${i * 0.2}s infinite ease-in-out` }} />)}
-                  </div>
-                </div>
+                )}
+                <div ref={endRef} />
               </div>
             )}
-            <div ref={endRef} />
           </div>
 
-          {/* Input area */}
-          <div className="px-4 sm:px-6 py-3 flex-shrink-0" style={{ background: "rgba(8,5,17,0.85)", backdropFilter: "blur(24px)", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          {/* Input bar */}
+          <div className="flex-shrink-0 px-4 py-3" style={{ background: "#0d0d14", borderTop: "1px solid #1e1e2b" }}>
             <div className="max-w-3xl mx-auto">
 
               {/* Upload error */}
               {uploadErr && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded-xl mb-2 text-xs" style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
-                  ❌ {uploadErr}
-                  <button onClick={() => setUploadErr("")} className="ml-auto"><X size={11} /></button>
+                <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-xl text-xs" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", color: "#fca5a5" }}>
+                  {uploadErr}
+                  <button onClick={() => setUploadErr("")} className="ml-auto"><X size={12} /></button>
                 </div>
               )}
 
-              {/* File chip */}
-              {(attachedFile || uploading) && (
-                <div className="mb-2 flex items-center gap-2">
-                  {uploading ? (
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-                      <Loader2 size={13} className="animate-spin" style={{ color: "#a855f7" }} />
-                      <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Reading file…</span>
-                    </div>
-                  ) : attachedFile && (
-                    <FileChip file={attachedFile} onRemove={() => setAttachedFile(null)} />
-                  )}
+              {/* Attached file chip */}
+              {attachedFile && (
+                <div className="mb-2">
+                  <FileChip file={attachedFile} onRemove={() => setAttachedFile(null)} />
                 </div>
               )}
 
-              {/* Limit reached inline */}
-              {guestLimitReached && (
-                <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-3"
-                  style={{ background: "rgba(168,85,247,0.08)", border: "1px solid rgba(168,85,247,0.25)" }}>
-                  <div className="flex items-center gap-2 text-sm" style={{ color: "rgba(255,255,255,0.65)" }}>
-                    <Lock size={14} style={{ color: "#a855f7" }} />
-                    <span>Free messages used — create an account to keep chatting</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <button onClick={() => nav("/login")} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ color: "rgba(255,255,255,0.5)", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>Log in</button>
-                    <button onClick={() => nav("/signup")} className="px-3 py-1.5 rounded-lg text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)" }}>Sign up</button>
-                  </div>
+              {/* Guest limit bar */}
+              {!user && remainingGuest !== null && remainingGuest <= 2 && (
+                <div className="flex items-center justify-between mb-2 px-3 py-2 rounded-xl text-xs"
+                  style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.15)", color: "#fbbf24" }}>
+                  <span>{remainingGuest === 0 ? "Out of free messages" : `${remainingGuest} free message${remainingGuest !== 1 ? "s" : ""} left`}</span>
+                  <button onClick={() => nav("/signup")} className="underline font-semibold">Create account</button>
                 </div>
               )}
 
-              {/* Text input row */}
-              <div className={`flex gap-2 items-end rounded-2xl p-2 transition-all duration-200 ${guestLimitReached ? "opacity-50 pointer-events-none" : ""}`}
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-                onFocusCapture={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(168,85,247,0.4)"; (e.currentTarget as HTMLElement).style.boxShadow = "0 0 0 3px rgba(168,85,247,0.08)"; }}
-                onBlurCapture={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.1)"; (e.currentTarget as HTMLElement).style.boxShadow = "none"; }}>
-
-                {/* Attach button */}
+              {/* Textarea + buttons */}
+              <div className="flex items-end gap-2 rounded-2xl p-2" style={{ background: "#111117", border: "1px solid #1e1e2b" }}>
+                {/* Attach */}
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading || guestLimitReached}
-                  title="Attach image, PDF, or Word document"
-                  className="w-9 h-9 flex-shrink-0 rounded-xl flex items-center justify-center transition-all duration-200"
-                  style={{ color: attachedFile ? "#a855f7" : "rgba(255,255,255,0.35)", background: attachedFile ? "rgba(168,85,247,0.12)" : "rgba(255,255,255,0.05)" }}>
-                  {uploading ? <Loader2 size={15} className="animate-spin" /> : <Paperclip size={15} />}
+                  className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-colors self-end mb-0.5 disabled:opacity-40"
+                  style={{ color: "#6b6b85", background: "#1a1a27" }}
+                  title="Attach file (image, PDF, Word)"
+                  onMouseEnter={e => !uploading && ((e.currentTarget as HTMLElement).style.color = "#a78bfa")}
+                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.color = "#6b6b85")}
+                >
+                  {uploading ? <Loader2 size={16} className="animate-spin text-violet-400" /> : <Paperclip size={16} />}
                 </button>
 
                 <textarea
-                  ref={inputRef} value={input}
-                  onChange={e => { setInput(e.target.value); e.target.style.height = "auto"; e.target.style.height = Math.min(e.target.scrollHeight, 160) + "px"; }}
+                  ref={inputRef}
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
                   onKeyDown={handleKey}
-                  placeholder={attachedFile ? "Add a question about this file… (optional)" : guestLimitReached ? "Sign up to continue…" : "Ask FUNDO AI anything… 🤖"}
+                  placeholder={guestLimitReached ? "Create an account to continue chatting…" : "Ask anything…"}
                   disabled={guestLimitReached}
                   rows={1}
-                  className="flex-1 bg-transparent text-sm resize-none outline-none leading-relaxed py-2"
-                  style={{ color: "rgba(255,255,255,0.88)", maxHeight: 160, minHeight: 24, scrollbarWidth: "none" }}
+                  className="flex-1 resize-none bg-transparent text-sm text-white outline-none leading-relaxed py-2.5 px-1 disabled:opacity-50"
+                  style={{ maxHeight: 120, minHeight: 40, scrollbarWidth: "none" }}
+                  onInput={e => {
+                    const t = e.target as HTMLTextAreaElement;
+                    t.style.height = "auto";
+                    t.style.height = Math.min(t.scrollHeight, 120) + "px";
+                  }}
                 />
 
-                <button onClick={() => send()} disabled={(!input.trim() && !attachedFile) || thinking || uploading || guestLimitReached}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200"
-                  style={{ background: (input.trim() || attachedFile) && !thinking && !guestLimitReached ? "linear-gradient(135deg,#a855f7,#7c3aed)" : "rgba(255,255,255,0.08)", boxShadow: (input.trim() || attachedFile) && !thinking && !guestLimitReached ? "0 3px 12px rgba(168,85,247,0.35)" : "none" }}>
-                  {thinking ? <Loader2 size={15} className="animate-spin text-white" /> : <Send size={15} className="text-white" />}
+                <button
+                  onClick={() => send()}
+                  disabled={(!input.trim() && !attachedFile) || thinking || guestLimitReached}
+                  className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center transition-colors self-end mb-0.5 disabled:opacity-40"
+                  style={{ background: "#7c3aed", color: "#fff" }}
+                  onMouseEnter={e => !thinking && ((e.currentTarget as HTMLElement).style.background = "#6d28d9")}
+                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = "#7c3aed")}
+                >
+                  {thinking ? <Loader2 size={16} className="animate-spin" /> : <Send size={15} />}
                 </button>
               </div>
 
-              <p className="text-center text-[11px] mt-2" style={{ color: "rgba(255,255,255,0.22)" }}>
-                Supports images, PDFs & Word docs · FUNDO AI can make mistakes · 🇿🇼 ZIMSEC-aligned
+              <p className="text-center text-[10px] mt-2" style={{ color: "#3a3a50" }}>
+                FUNDO AI can make mistakes · Always verify important information
               </p>
             </div>
           </div>
+
         </div>
       </div>
-
-      <style>{`
-        @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
-      `}</style>
     </PageLayout>
   );
 }
