@@ -18,7 +18,7 @@ function headers(extra: Record<string, string> = {}) {
 
 async function request(path: string, opts: RequestInit = {}) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 30000);
+  const timer = setTimeout(() => controller.abort(), 90000);
   try {
     const res = await fetch(`${API}${path}`, {
       ...opts,
@@ -29,7 +29,7 @@ async function request(path: string, opts: RequestInit = {}) {
     if (!res.ok) throw new Error(data.error || "Request failed");
     return data;
   } catch (err: any) {
-    if (err.name === "AbortError") throw new Error("Request timed out — please try again");
+    if (err.name === "AbortError") throw new Error("Server is starting up — please wait a moment and try again");
     throw err;
   } finally {
     clearTimeout(timer);

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Mail, Lock, ArrowRight, Loader2, Sparkles, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
@@ -11,10 +11,22 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [slowConn, setSlowConn] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
   const [, nav] = useLocation();
   const { login } = useAuth();
+  const slowTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (loading) {
+      slowTimer.current = setTimeout(() => setSlowConn(true), 6000);
+    } else {
+      if (slowTimer.current) clearTimeout(slowTimer.current);
+      setSlowConn(false);
+    }
+    return () => { if (slowTimer.current) clearTimeout(slowTimer.current); };
+  }, [loading]);
 
   async function submitMagic(e: React.FormEvent) {
     e.preventDefault();
@@ -123,11 +135,18 @@ export default function Login() {
             style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 20px rgba(168,85,247,0.35)", opacity: loading ? 0.7 : 1 }}
             onMouseEnter={e => { if (!loading) (e.currentTarget as HTMLElement).style.transform = "scale(1.02)"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = "none"; }}>
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <><Sparkles size={15} /><span>Send magic link</span><ArrowRight size={16} /></>}
+            {loading ? <><Loader2 size={16} className="animate-spin" /><span>{slowConn ? "Waking server up…" : "Sending…"}</span></> : <><Sparkles size={15} /><span>Send magic link</span><ArrowRight size={16} /></>}
           </button>
-          <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
-            We'll email you a one-click sign-in link — no password needed
-          </p>
+          {slowConn && (
+            <p className="text-center text-xs animate-pulse" style={{ color: "rgba(168,85,247,0.8)" }}>
+              ⏳ Server is starting up — this takes ~30s on first load
+            </p>
+          )}
+          {!slowConn && (
+            <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.35)" }}>
+              We'll email you a one-click sign-in link — no password needed
+            </p>
+          )}
         </form>
       )}
 
