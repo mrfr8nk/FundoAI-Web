@@ -1,4 +1,4 @@
-# FUNDO AI — Web Platform
+# FUNO AI — Web Platform
 
 ## Overview
 
