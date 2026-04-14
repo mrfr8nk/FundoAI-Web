@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Send, Loader2, Bot, User, Trash2, MessageCircle, Globe,
+  Send, Loader2, Bot, User, Trash2, MessageCircle,
   Zap, X, Paperclip, Image as ImageIcon,
   FileText, FileType2, Clock, History, ChevronLeft, KeyRound, LogOut, Eye, EyeOff,
-  Lock, ArrowRight,
+  Lock, ArrowRight, Crown, Star, Shield, Rocket, TrendingUp,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { api } from "@/lib/api";
@@ -11,6 +11,14 @@ import { useAuth } from "@/lib/auth";
 import PageLayout from "@/components/PageLayout";
 
 const GUEST_LIMIT = 5;
+
+const PLAN_META: Record<string, { label: string; color: string; bg: string; border: string; Icon: any }> = {
+  free:    { label: "Free",    color: "#9ca3af", bg: "rgba(156,163,175,0.1)", border: "rgba(156,163,175,0.2)", Icon: Shield },
+  starter: { label: "Starter", color: "#10b981", bg: "rgba(16,185,129,0.1)",  border: "rgba(16,185,129,0.2)",  Icon: Zap },
+  basic:   { label: "Basic",   color: "#3b82f6", bg: "rgba(59,130,246,0.1)",  border: "rgba(59,130,246,0.2)",  Icon: Star },
+  pro:     { label: "Pro",     color: "#a855f7", bg: "rgba(168,85,247,0.12)", border: "rgba(168,85,247,0.3)",  Icon: Rocket },
+  premium: { label: "Premium", color: "#f59e0b", bg: "rgba(245,158,11,0.1)",  border: "rgba(245,158,11,0.25)", Icon: Crown },
+};
 
 interface Msg {
   role: "user" | "assistant";
@@ -325,6 +333,7 @@ export default function Chat() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showSetPw, setShowSetPw] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
+  const [usage, setUsage] = useState<{ chatsToday: number; limit: number; plan: string; pdfsToday: number } | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -345,6 +354,7 @@ export default function Chat() {
         setMessages(hist);
       }).catch(() => {}).finally(() => setHistLoading(false));
       api.me().then(d => setHasPassword(!!d.user?.hasPassword)).catch(() => {});
+      api.getUsage().then(d => setUsage({ chatsToday: d.chatsToday, limit: d.limits?.chats, plan: d.plan, pdfsToday: d.pdfsToday })).catch(() => {});
     }
   }, [user]);
 
@@ -404,6 +414,9 @@ export default function Chat() {
       let data: any;
       if (user) {
         data = await api.chat(aiMessage, imageBase64);
+        if (data.usage) {
+          setUsage(u => u ? { ...u, chatsToday: data.usage.chatsToday, limit: data.usage.limit, plan: data.usage.plan } : u);
+        }
       } else {
         const hist = sessionHistory.slice(-6).map(h => ({ role: h.role, content: h.content }));
         data = await api.chatGuest(aiMessage, hist, imageBase64);
@@ -497,46 +510,120 @@ export default function Chat() {
               {user && (
                 <div className="relative">
                   <button onClick={() => setShowUserMenu(o => !o)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                    style={{ color: "#8888a0", background: "#1a1a27", border: "1px solid #1e1e2b" }}>
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                    style={{ color: "#c4b5fd", background: "#1a1a27", border: "1px solid rgba(139,92,246,0.25)" }}>
                     <div className="w-5 h-5 rounded-md bg-violet-600 flex items-center justify-center flex-shrink-0">
                       <User size={11} className="text-white" />
                     </div>
-                    <span className="hidden sm:block max-w-[120px] truncate">{user.name || user.email}</span>
+                    <span className="hidden sm:block max-w-[100px] truncate">{user.name || user.email}</span>
+                    {usage && (
+                      <span className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold ml-0.5"
+                        style={{ background: PLAN_META[usage.plan]?.bg || "rgba(156,163,175,0.1)", color: PLAN_META[usage.plan]?.color || "#9ca3af", border: `1px solid ${PLAN_META[usage.plan]?.border || "rgba(156,163,175,0.2)"}` }}>
+                        {usage.plan === "premium" ? <Crown size={9} /> : usage.plan === "pro" ? <Rocket size={9} /> : null}
+                        {PLAN_META[usage.plan]?.label || "Free"}
+                      </span>
+                    )}
                   </button>
 
                   {showUserMenu && (
-                    <div className="absolute right-0 top-full mt-2 w-52 rounded-xl overflow-hidden z-50 slide-down"
-                      style={{ background: "#111117", border: "1px solid #1e1e2b" }}>
-                      <div className="px-4 py-3" style={{ borderBottom: "1px solid #1e1e2b" }}>
-                        <p className="text-xs font-semibold text-white truncate">{user.name}</p>
-                        <p className="text-xs truncate" style={{ color: "#6b6b85" }}>{user.email}</p>
+                    <div className="absolute right-0 top-full mt-2 w-64 rounded-2xl overflow-hidden z-50 slide-down"
+                      style={{ background: "#0d0d14", border: "1px solid #1e1e2b", boxShadow: "0 16px 48px rgba(0,0,0,0.5)" }}>
+
+                      {/* User header */}
+                      <div className="px-4 pt-4 pb-3" style={{ borderBottom: "1px solid #1e1e2b" }}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-xl bg-violet-600 flex items-center justify-center flex-shrink-0">
+                            <User size={18} className="text-white" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                            <p className="text-xs truncate" style={{ color: "#6b6b85" }}>{user.email}</p>
+                          </div>
+                        </div>
+
+                        {/* Plan badge */}
+                        {usage && (() => {
+                          const meta = PLAN_META[usage.plan] || PLAN_META["free"];
+                          const PlanIcon = meta.Icon;
+                          return (
+                            <div className="flex items-center justify-between px-3 py-2 rounded-xl mb-2"
+                              style={{ background: meta.bg, border: `1px solid ${meta.border}` }}>
+                              <div className="flex items-center gap-2">
+                                <PlanIcon size={13} style={{ color: meta.color }} />
+                                <span className="text-xs font-bold" style={{ color: meta.color }}>{meta.label} Plan</span>
+                              </div>
+                              {usage.plan === "free" && (
+                                <button onClick={() => { nav("/upgrade"); setShowUserMenu(false); }}
+                                  className="text-[10px] font-bold px-2 py-0.5 rounded-lg"
+                                  style={{ background: "rgba(168,85,247,0.15)", color: "#a855f7", border: "1px solid rgba(168,85,247,0.3)" }}>
+                                  Upgrade
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {/* Usage bar */}
+                        {usage && usage.limit !== Infinity && (
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <TrendingUp size={10} style={{ color: "#6b6b85" }} />
+                                <span className="text-[10px] font-semibold" style={{ color: "#6b6b85" }}>Daily chats</span>
+                              </div>
+                              <span className="text-[10px] font-bold" style={{
+                                color: usage.chatsToday >= usage.limit * 0.9 ? "#f87171" : usage.chatsToday >= usage.limit * 0.7 ? "#fbbf24" : "#6b6b85"
+                              }}>
+                                {usage.chatsToday} / {usage.limit}
+                              </span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "#1a1a27" }}>
+                              <div className="h-full rounded-full transition-all"
+                                style={{
+                                  width: `${Math.min(100, (usage.chatsToday / usage.limit) * 100)}%`,
+                                  background: usage.chatsToday >= usage.limit * 0.9
+                                    ? "linear-gradient(90deg,#ef4444,#dc2626)"
+                                    : usage.chatsToday >= usage.limit * 0.7
+                                    ? "linear-gradient(90deg,#f59e0b,#d97706)"
+                                    : "linear-gradient(90deg,#a855f7,#7c3aed)",
+                                }} />
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="p-1.5 space-y-0.5">
+
+                      {/* Menu items */}
+                      <div className="p-2 space-y-0.5">
                         <button onClick={() => { setShowSetPw(true); setShowUserMenu(false); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left"
+                          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-medium transition-all text-left group"
                           style={{ color: "#8888a0" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#1a1a27"; (e.currentTarget as HTMLElement).style.color = "#fff"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#8888a0"; }}>
-                          <KeyRound size={13} />
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#111117", border: "1px solid #1e1e2b" }}>
+                            <KeyRound size={12} />
+                          </div>
                           {hasPassword ? "Change password" : "Set a password"}
                         </button>
                         <button onClick={() => { clearHistory(); setShowUserMenu(false); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left"
+                          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-medium transition-all text-left"
                           style={{ color: "#8888a0" }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#1a1a27"; (e.currentTarget as HTMLElement).style.color = "#f87171"; }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(239,68,68,0.06)"; (e.currentTarget as HTMLElement).style.color = "#f87171"; }}
                           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#8888a0"; }}>
-                          <Trash2 size={13} />
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#111117", border: "1px solid #1e1e2b" }}>
+                            <Trash2 size={12} />
+                          </div>
                           Clear chat history
                         </button>
                       </div>
-                      <div className="p-1.5" style={{ borderTop: "1px solid #1e1e2b" }}>
+                      <div className="p-2 pt-0" style={{ borderTop: "1px solid #1e1e2b" }}>
                         <button onClick={() => { nav("/"); setShowUserMenu(false); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2 rounded-lg text-xs font-medium transition-colors text-left"
-                          style={{ color: "#8888a0" }}
+                          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-medium transition-all text-left"
+                          style={{ color: "#6b6b85" }}
                           onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "#1a1a27"; (e.currentTarget as HTMLElement).style.color = "#fff"; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#8888a0"; }}>
-                          <LogOut size={13} />
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "#6b6b85"; }}>
+                          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "#111117", border: "1px solid #1e1e2b" }}>
+                            <LogOut size={12} />
+                          </div>
                           Exit to home
                         </button>
                       </div>

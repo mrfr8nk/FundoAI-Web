@@ -45,8 +45,13 @@ export default function About() {
           <div className="glass-card rounded-3xl p-8 sm:p-10" style={{ boxShadow: "0 0 60px rgba(168,85,247,0.08)" }}>
             <div className="flex flex-col sm:flex-row gap-8 items-center sm:items-start">
               <div className="flex-shrink-0">
-                <div className="w-24 h-24 rounded-3xl flex items-center justify-center relative" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 0 40px rgba(168,85,247,0.4)" }}>
-                  <span className="text-4xl">👨‍💻</span>
+                <div className="relative">
+                  <img
+                    src="https://mrfranko-cdn.hf.space/synapex/darex.jpeg"
+                    alt="Darrell Mucheri"
+                    className="w-28 h-28 rounded-3xl object-cover object-top"
+                    style={{ boxShadow: "0 0 40px rgba(168,85,247,0.4)", border: "2px solid rgba(168,85,247,0.35)" }}
+                  />
                   <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl flex items-center justify-center text-base" style={{ background: "rgba(8,5,17,0.9)", border: "2px solid rgba(168,85,247,0.3)" }}>🇿🇼</div>
                 </div>
               </div>
@@ -77,8 +82,13 @@ export default function About() {
           <div className="glass-card rounded-3xl p-8 sm:p-10" style={{ boxShadow: "0 0 60px rgba(6,182,212,0.07)" }}>
             <div className="flex flex-col sm:flex-row gap-8 items-center sm:items-start">
               <div className="flex-shrink-0">
-                <div className="w-24 h-24 rounded-3xl flex items-center justify-center relative" style={{ background: "linear-gradient(135deg,#06b6d4,#0891b2)", boxShadow: "0 0 40px rgba(6,182,212,0.35)" }}>
-                  <span className="text-4xl">🤝</span>
+                <div className="relative">
+                  <img
+                    src="https://mrfranko-cdn.hf.space/synapex/crej.jpeg"
+                    alt="Crejinai Makanyisa"
+                    className="w-28 h-28 rounded-3xl object-cover object-top"
+                    style={{ boxShadow: "0 0 40px rgba(6,182,212,0.35)", border: "2px solid rgba(6,182,212,0.35)" }}
+                  />
                   <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl flex items-center justify-center text-base" style={{ background: "rgba(8,5,17,0.9)", border: "2px solid rgba(6,182,212,0.3)" }}>🇿🇼</div>
                 </div>
               </div>

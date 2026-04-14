@@ -69,6 +69,7 @@ export const api = {
     request("/ai/chat/guest", { method: "POST", body: JSON.stringify({ message, sessionHistory, imageBase64 }) }),
   getHistory: () => request("/ai/history"),
   clearHistory: () => request("/ai/history", { method: "DELETE" }),
+  getUsage: () => request("/ai/usage"),
 
   // Billing
   billingPlans: () => request("/billing/plans"),

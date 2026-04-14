@@ -18,6 +18,30 @@ const mammoth: { extractRawText: (opts: { buffer: Buffer }) => Promise<{ value: 
 
 const router = Router();
 
+// ── Plan limits ───────────────────────────────────────────────────────────────
+const PLAN_LIMITS: Record<string, { chats: number; pdfs: number }> = {
+  free:    { chats: 25,   pdfs: 1 },
+  starter: { chats: 75,   pdfs: 3 },
+  basic:   { chats: 300,  pdfs: 10 },
+  pro:     { chats: 1000, pdfs: 50 },
+  premium: { chats: Infinity, pdfs: Infinity },
+};
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function resetUsageIfNeeded(user: any) {
+  const today = todayStr();
+  if (user.usageResetDate !== today) {
+    user.chatsToday = 0;
+    user.imagestoday = 0;
+    user.pdfsToday = 0;
+    user.downloadsToday = 0;
+    user.usageResetDate = today;
+  }
+}
+
 const BK9_MODEL = process.env["BK9_MODEL"] || "meta-llama/llama-4-scout-17b-16e-instruct";
 const TAVILY_KEY = process.env["TAVILY_API_KEY"] || "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";
 
@@ -205,6 +229,31 @@ const upload = multer({
   },
 });
 
+// ── GET /api/ai/usage ─────────────────────────────────────────────────────────
+router.get("/usage", requireAuth, async (req, res) => {
+  try {
+    await connectDB();
+    const user = (req as any).user;
+    const fullUser = await User.findById(user._id).select("plan chatsToday pdfsToday imagestoday downloadsToday usageResetDate");
+    if (!fullUser) { res.status(404).json({ error: "User not found" }); return; }
+    await resetUsageIfNeeded(fullUser);
+    await fullUser.save();
+    const plan = fullUser.plan || "free";
+    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+    res.json({
+      plan,
+      chatsToday: fullUser.chatsToday || 0,
+      pdfsToday: fullUser.pdfsToday || 0,
+      imagestoday: fullUser.imagestoday || 0,
+      downloadsToday: fullUser.downloadsToday || 0,
+      limits,
+      resetDate: fullUser.usageResetDate,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── POST /api/ai/upload ───────────────────────────────────────────────────────
 router.post("/upload", requireAuth, (req, res, next) => {
   upload.single("file")(req, res, (err: any) => {
@@ -220,6 +269,27 @@ router.post("/upload", requireAuth, (req, res, next) => {
     const isImage = mimetype.startsWith("image/");
     const isPDF   = mimetype === "application/pdf";
     const isWord  = mimetype.includes("wordprocessingml") || mimetype === "application/msword";
+
+    // Enforce PDF limit for PDF/Word uploads
+    if (isPDF || isWord) {
+      await connectDB();
+      const authUser = (req as any).user;
+      const fullUser = await User.findById(authUser._id);
+      if (fullUser) {
+        await resetUsageIfNeeded(fullUser);
+        const plan = fullUser.plan || "free";
+        const limits = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+        if (fullUser.pdfsToday >= limits.pdfs) {
+          res.status(429).json({
+            error: `You've reached your daily PDF limit of ${limits.pdfs} on the ${plan} plan. Upgrade for more!`,
+            limitReached: true,
+          });
+          return;
+        }
+        fullUser.pdfsToday = (fullUser.pdfsToday || 0) + 1;
+        await fullUser.save();
+      }
+    }
 
     if (isImage) {
       const b64 = buffer.toString("base64");
@@ -278,15 +348,32 @@ router.post("/chat", requireAuth, async (req, res) => {
     const fullUser = await User.findById(user._id);
     if (!fullUser) { res.status(404).json({ error: "User not found" }); return; }
 
+    // Reset daily usage if it's a new day
+    await resetUsageIfNeeded(fullUser);
+
+    // Enforce plan chat limits
+    const plan = fullUser.plan || "free";
+    const limits = PLAN_LIMITS[plan] || PLAN_LIMITS["free"];
+    if (fullUser.chatsToday >= limits.chats) {
+      res.status(429).json({
+        error: `You've reached your daily limit of ${limits.chats} AI chats on the ${plan} plan. Upgrade to get more!`,
+        limitReached: true,
+        plan,
+        limit: limits.chats,
+      });
+      return;
+    }
+
     const history = fullUser.chatHistory.slice(-20).map(h => ({ role: h.role, content: h.content }));
     const reply = await askAI(message, history, String(fullUser._id), imageBase64);
 
     fullUser.chatHistory.push({ role: "user", content: message.substring(0, 1200), ts: Date.now() });
     fullUser.chatHistory.push({ role: "assistant", content: reply.substring(0, 1200), ts: Date.now() });
     if (fullUser.chatHistory.length > 60) fullUser.chatHistory = fullUser.chatHistory.slice(-60);
+    fullUser.chatsToday = (fullUser.chatsToday || 0) + 1;
     await fullUser.save();
 
-    res.json({ reply });
+    res.json({ reply, usage: { chatsToday: fullUser.chatsToday, limit: limits.chats, plan } });
   } catch (err: any) {
     res.status(500).json({ error: err.message || "AI error" });
   }
