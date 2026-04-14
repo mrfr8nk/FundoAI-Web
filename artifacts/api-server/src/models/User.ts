@@ -15,6 +15,15 @@ export interface IUser extends Document {
   level: string;
   chatHistory: Array<{ role: string; content: string; ts: number }>;
   createdAt: Date;
+  plan: string;
+  planExpires: Date | null;
+  paynowPollUrl: string | null;
+  paynowRef: string | null;
+  chatsToday: number;
+  imagestoday: number;
+  pdfsToday: number;
+  downloadsToday: number;
+  usageResetDate: string;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -32,6 +41,15 @@ const UserSchema = new Schema<IUser>({
   level:              { type: String, default: "" },
   chatHistory:        { type: [{ role: String, content: String, ts: Number }], default: [] },
   createdAt:          { type: Date, default: Date.now },
+  plan:               { type: String, default: "free", enum: ["free", "starter", "basic", "pro", "premium"] },
+  planExpires:        { type: Date, default: null },
+  paynowPollUrl:      { type: String, default: null },
+  paynowRef:          { type: String, default: null },
+  chatsToday:         { type: Number, default: 0 },
+  imagestoday:        { type: Number, default: 0 },
+  pdfsToday:          { type: Number, default: 0 },
+  downloadsToday:     { type: Number, default: 0 },
+  usageResetDate:     { type: String, default: "" },
 });
 
 export const User = mongoose.models.User || mongoose.model<IUser>("User", UserSchema);

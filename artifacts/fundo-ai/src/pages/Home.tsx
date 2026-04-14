@@ -132,6 +132,12 @@ const FEATURES = [
   { icon: FileText,    title: "Document Analysis",        desc: "Upload PDFs, Word documents, or images and get instant summaries, explanations, and answers." },
   { icon: Calculator,  title: "Step-by-Step Math",        desc: "Full working shown for every problem — from primary arithmetic to A-Level calculus and statistics." },
   { icon: Database,    title: "Persistent Memory",        desc: "Remembers your name, grade, subjects, and learning goals across every session." },
+  { icon: Camera,      title: "Image Generation",         desc: "Generate any image from a text description — posters, diagrams, illustrations, and more." },
+  { icon: PenLine,     title: "School Project PDFs",      desc: "Full ZIMSEC-quality project PDFs generated in seconds with proper headings and structure." },
+  { icon: Sparkles,    title: "Flash Quizzes",            desc: "Practice exams and flash quizzes for any ZIMSEC subject and level — instant feedback." },
+  { icon: Search,      title: "Study Materials Library",  desc: "Syllabuses, textbooks, past exam papers, and marking schemes — all sent directly to you." },
+  { icon: Zap,         title: "Weather & Time",           desc: "Live weather for any city worldwide and time zone lookups for anywhere on the planet." },
+  { icon: MessageCircle, title: "WhatsApp + Web",         desc: "Same FUNDO AI experience on WhatsApp (+263 719 647 303) and this web platform — always in sync." },
 ];
 
 const STEPS = [
@@ -300,6 +306,7 @@ export default function Home() {
     { label: "Features",     href: "#features" },
     { label: "How It Works", href: "#how" },
     { label: "Demo",         href: "#demo" },
+    { label: "Pricing",      href: "/pricing" },
     { label: "About",        href: "/about" },
   ];
 
@@ -612,6 +619,72 @@ export default function Home() {
         </Reveal>
       </section>
 
+      {/* ════════ PRICING PREVIEW ════════ */}
+      <section id="pricing" className="max-w-6xl mx-auto px-4 sm:px-6 py-20">
+        <Reveal className="text-center mb-10">
+          <p className="text-xs font-bold uppercase tracking-widest text-violet-400 mb-3">Pricing</p>
+          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">Plans for every student</h2>
+          <p className="text-base max-w-lg mx-auto" style={{ color: "#8888a0" }}>
+            Start free. Upgrade anytime via EcoCash or card. All plans include the full ZIMSEC-aligned AI tutor.
+          </p>
+        </Reveal>
+        <Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+            {[
+              { name: "Free",    price: "$0",  period: "/mo", color: "#6b7280", popular: false, features: ["25 chats/day", "3 images/day", "1 PDF/day", "10 downloads/day"] },
+              { name: "Starter", price: "$1",  period: "/mo", color: "#10b981", popular: false, features: ["75 chats/day", "8 images/day", "3 PDFs/month", "Unlimited downloads"] },
+              { name: "Basic",   price: "$3",  period: "/mo", color: "#3b82f6", popular: false, features: ["300 chats/day", "20 images/day", "10 PDFs/month", "Flash quizzes"] },
+              { name: "Pro",     price: "$10", period: "/mo", color: "#a855f7", popular: true,  features: ["1,000 chats/day", "50 images/day", "50 PDFs/month", "Full library access"] },
+              { name: "Premium", price: "$20", period: "/mo", color: "#f59e0b", popular: false, features: ["Unlimited chats", "Unlimited images", "Unlimited PDFs", "VIP support"] },
+            ].map(plan => (
+              <div
+                key={plan.name}
+                className="p-5 rounded-2xl flex flex-col relative transition-all duration-200"
+                style={{
+                  background: plan.popular ? "linear-gradient(135deg, rgba(139,92,246,0.12), rgba(109,40,217,0.06))" : "#111117",
+                  border: `1px solid ${plan.popular ? "rgba(168,85,247,0.4)" : "#1e1e2b"}`,
+                  boxShadow: plan.popular ? "0 0 32px rgba(168,85,247,0.12)" : "none",
+                  transform: plan.popular ? "scale(1.02)" : "none",
+                }}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full text-xs font-bold text-white" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)" }}>
+                    Popular 🔥
+                  </div>
+                )}
+                <div className="text-xs font-bold mb-1" style={{ color: plan.color }}>{plan.name}</div>
+                <div className="mb-3">
+                  <span className="text-2xl font-black text-white">{plan.price}</span>
+                  <span className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>{plan.period}</span>
+                </div>
+                <ul className="space-y-1.5 flex-1 mb-4">
+                  {plan.features.map(f => (
+                    <li key={f} className="flex items-center gap-1.5">
+                      <ChevronRight size={11} style={{ color: plan.color }} />
+                      <span className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => nav(plan.name === "Free" ? "/signup" : "/pricing")}
+                  className="w-full py-2 rounded-lg text-xs font-bold transition-all"
+                  style={plan.popular
+                    ? { background: "linear-gradient(135deg,#a855f7,#7c3aed)", color: "#fff" }
+                    : { background: "#1a1a27", color: "rgba(255,255,255,0.6)", border: "1px solid #2a2a3a" }}
+                >
+                  {plan.name === "Free" ? "Get started" : "Upgrade"}
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="text-center">
+            <button onClick={() => nav("/pricing")} className="inline-flex items-center gap-2 text-sm font-semibold text-violet-400 hover:text-violet-300 transition-colors">
+              View full pricing details <ArrowRight size={14} />
+            </button>
+          </div>
+        </Reveal>
+      </section>
+
       {/* ════════ CTA ════════ */}
       <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-20">
         <Reveal>
@@ -669,7 +742,7 @@ export default function Home() {
               <span className="text-sm font-black text-white">FUNDO <span className="text-violet-400">AI</span></span>
             </div>
             <div className="flex items-center gap-5">
-              {[{ l: "About", h: "/about" }, { l: "Privacy", h: "/privacy" }, { l: "Terms", h: "/terms" }].map(({ l, h }) => (
+              {[{ l: "Pricing", h: "/pricing" }, { l: "About", h: "/about" }, { l: "Privacy", h: "/privacy" }, { l: "Terms", h: "/terms" }].map(({ l, h }) => (
                 <button key={l} onClick={() => nav(h)}
                   className="text-xs transition-colors duration-150"
                   style={{ color: "#4a4a62" }}

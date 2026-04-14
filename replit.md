@@ -24,8 +24,29 @@ pnpm monorepo with:
 | Database | MongoDB (Mongoose) |
 | Auth | bcryptjs + JWT + nodemailer (SMTP) magic-link |
 | AI | BK9 API (Llama 4 Scout) + Tavily search |
+| Payments | PayNow Zimbabwe (EcoCash + Card web checkout) |
 | UI | Dark theme + violet accent (#8b5cf6) + Lucide icons |
 | Monorepo | pnpm workspaces |
+
+## Plans & Billing
+
+5 tiers tracked in User model (plan field):
+- **Free** $0 — 25 chats/3 images/1 PDF/10 downloads per day
+- **Starter** $1/mo — 75 chats/8 images/3 PDFs/unlimited downloads
+- **Basic** $3/mo — 300 chats/20 images/10 PDFs
+- **Pro** $10/mo — 1000 chats/50 images/50 PDFs (most popular)
+- **Premium** $20/mo — Unlimited everything
+
+Billing routes: `GET /api/billing/plans`, `GET /api/billing/status`, `POST /api/billing/upgrade`, `GET /api/billing/poll`, `POST /api/billing/result`
+PayNow secrets needed: `PAYNOW_INTEGRATION_ID`, `PAYNOW_INTEGRATION_KEY`
+
+## Pages
+
+- `/` — Home with hero, features (12), how it works, demo, pricing preview, CTA
+- `/pricing` — Full Stripe-style pricing page with 5 plan cards
+- `/upgrade?plan=<id>` — EcoCash/card checkout page (requires auth)
+- `/chat` — AI chat interface
+- `/about`, `/privacy`, `/terms` — Info pages
 
 ## Workflows
 

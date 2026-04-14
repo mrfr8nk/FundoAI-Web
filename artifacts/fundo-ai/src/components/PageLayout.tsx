@@ -18,6 +18,7 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
   const NAV = [
     { label: "Features",     href: "/#features" },
     { label: "How It Works", href: "/#how" },
+    { label: "Pricing",      href: "/pricing" },
     { label: "About",        href: "/about" },
     { label: "Chat",         href: "/chat" },
   ];

@@ -70,6 +70,13 @@ export const api = {
   getHistory: () => request("/ai/history"),
   clearHistory: () => request("/ai/history", { method: "DELETE" }),
 
+  // Billing
+  billingPlans: () => request("/billing/plans"),
+  billingStatus: () => request("/billing/status"),
+  billingUpgrade: (body: { plan: string; method: "web" | "ecocash"; phone?: string }) =>
+    request("/billing/upgrade", { method: "POST", body: JSON.stringify(body) }),
+  billingPoll: (plan: string) => request(`/billing/poll?plan=${plan}`),
+
   // File upload
   uploadFile: async (file: File) => {
     const formData = new FormData();

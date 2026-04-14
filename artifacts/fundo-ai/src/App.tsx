@@ -14,6 +14,8 @@ import Chat from "@/pages/Chat";
 import About from "@/pages/About";
 import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
+import Pricing from "@/pages/Pricing";
+import Upgrade from "@/pages/Upgrade";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -30,6 +32,8 @@ function Router() {
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/chat" component={Chat} />
       <Route path="/about" component={About} />
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/upgrade" component={Upgrade} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route component={NotFound} />
