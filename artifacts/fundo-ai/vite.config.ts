@@ -5,9 +5,10 @@ import path from "path";
 
 // On Replit both PORT and BASE_PATH are injected automatically.
 // On Render (Static Site) neither is set — use sensible defaults.
-const port = Number(process.env.PORT || 3000);
+const port = Number(process.env.PORT || 5000);
 const basePath = process.env.BASE_PATH || "/";
 const isReplit = !!process.env.REPL_ID;
+const apiPort = Number(process.env.API_PORT || 3000);
 
 export default defineConfig({
   base: basePath,
@@ -52,6 +53,12 @@ export default defineConfig({
     fs: {
       strict: true,
       deny: ["**/.*"],
+    },
+    proxy: {
+      "/api": {
+        target: `http://localhost:${apiPort}`,
+        changeOrigin: true,
+      },
     },
   },
   preview: {
