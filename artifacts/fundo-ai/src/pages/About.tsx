@@ -1,4 +1,4 @@
-import { Bot, Code2, Zap, Globe, Heart, GraduationCap, MessageCircle, Star, Award } from "lucide-react";
+import { Bot, Zap, Globe, Heart, GraduationCap, MessageCircle, Star } from "lucide-react";
 import { useLocation } from "wouter";
 import PageLayout from "@/components/PageLayout";
 
@@ -63,6 +63,38 @@ export default function About() {
                 <div className="flex flex-wrap gap-2 mt-5 justify-center sm:justify-start">
                   {["React", "Node.js", "MongoDB", "AI/ML", "WhatsApp API", "Zimbabwe 🇿🇼"].map(t => (
                     <span key={t} className="px-3 py-1 rounded-full text-xs font-medium" style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.2)", color: "rgba(255,255,255,0.6)" }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Partner */}
+      <section className="px-4 sm:px-6 pb-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="glass-card rounded-3xl p-8 sm:p-10" style={{ boxShadow: "0 0 60px rgba(6,182,212,0.07)" }}>
+            <div className="flex flex-col sm:flex-row gap-8 items-center sm:items-start">
+              <div className="flex-shrink-0">
+                <div className="w-24 h-24 rounded-3xl flex items-center justify-center relative" style={{ background: "linear-gradient(135deg,#06b6d4,#0891b2)", boxShadow: "0 0 40px rgba(6,182,212,0.35)" }}>
+                  <span className="text-4xl">🤝</span>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl flex items-center justify-center text-base" style={{ background: "rgba(8,5,17,0.9)", border: "2px solid rgba(6,182,212,0.3)" }}>🇿🇼</div>
+                </div>
+              </div>
+              <div className="text-center sm:text-left">
+                <div className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#06b6d4" }}>Partner & Co-owner</div>
+                <h2 className="text-3xl font-black text-white mb-1">Crejinai Makanyisa</h2>
+                <p className="text-sm font-medium mb-4" style={{ color: "rgba(255,255,255,0.4)" }}>Zimbabwe 🇿🇼 · Strategic Partner · 40% Co-owner</p>
+                <p className="text-sm leading-relaxed mb-4" style={{ color: "rgba(255,255,255,0.6)" }}>
+                  Crejinai is a trusted partner and co-owner of FUNDO AI, providing strategic financial sponsorship, marketing support, and business development to help the platform grow and reach more Zimbabwean students.
+                </p>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  His belief in the mission — that every student in Zimbabwe deserves world-class AI tutoring — has been instrumental in making FUNDO AI a reality.
+                </p>
+                <div className="flex flex-wrap gap-2 mt-5 justify-center sm:justify-start">
+                  {["Strategic Partner", "Marketing", "Business Development", "Zimbabwe 🇿🇼"].map(t => (
+                    <span key={t} className="px-3 py-1 rounded-full text-xs font-medium" style={{ background: "rgba(6,182,212,0.1)", border: "1px solid rgba(6,182,212,0.2)", color: "rgba(255,255,255,0.6)" }}>{t}</span>
                   ))}
                 </div>
               </div>

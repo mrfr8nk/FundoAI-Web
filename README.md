@@ -81,18 +81,17 @@ This repository is a **pnpm monorepo** containing:
 |---|---|---|
 | `MONGODB_URI` | ✅ | MongoDB Atlas connection string |
 | `JWT_SECRET` | ✅ | Random secret string for signing JWTs (min 32 chars) |
-| `SMTP_HOST` | ✅ | SMTP host — e.g. `smtp.gmail.com` |
-| `SMTP_PORT` | ✅ | SMTP port — `587` for Gmail TLS |
-| `SMTP_USER` | ✅ | Your Gmail address |
-| `SMTP_PASS` | ✅ | Gmail **App Password** (16 chars — NOT your regular password) |
-| `SMTP_FROM` | ✅ | Sender string — e.g. `FUNDO AI <noreply@fundoai.com>` |
+| `SMTP_EMAIL` | ✅ | Your email address — SMTP host/port are **auto-detected** from the domain |
+| `SMTP_PASSWORD` | ✅ | Your email **App Password** (see note below) |
 | `APP_URL` | ✅ | **Frontend URL** — magic links point here (e.g. `https://fundo-ai.onrender.com`) |
+| `TAVILY_API_KEY` | ✅ | Tavily API key for live web search |
 | `BK9_MODEL` | — | AI model override (default: `meta-llama/llama-4-scout-17b-16e-instruct`) |
-| `SESSION_SECRET` | — | Express session secret (if sessions are added later) |
 
-> **`APP_URL` is the most important variable for magic links.** It must be set to where your **frontend** is deployed — not the API server URL. Magic links will be broken if this points to the wrong domain.
+> **Auto-detected SMTP providers:** Gmail, Outlook/Hotmail/Live, Yahoo, Zoho, iCloud. Just set `SMTP_EMAIL` and `SMTP_PASSWORD` — no host, port, or from address needed.
 
-> **Gmail App Password:** Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), enable 2-Step Verification if not already done, then generate an App Password for "Mail". Use the 16-character code as `SMTP_PASS`.
+> **Gmail App Password:** Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), enable 2-Step Verification, then generate an App Password for "Mail". Use the 16-character code as `SMTP_PASSWORD`.
+
+> **`APP_URL` is critical for magic links.** It must point to your deployed **frontend** URL. Magic links will be broken if this is wrong.
 
 ---
 
@@ -117,18 +116,20 @@ Everything — frontend + API — runs as **one Web Service** on Render. The Exp
 
 ### Step 2 — Add environment variables
 
-In the **Environment** tab add all of these:
+In the **Environment** tab add these — just **4 required secrets**:
 
 | Key | Value |
 |---|---|
 | `MONGODB_URI` | Your MongoDB Atlas connection string |
 | `JWT_SECRET` | Any long random string (min 32 chars) |
-| `SMTP_HOST` | `smtp.gmail.com` |
-| `SMTP_PORT` | `587` |
-| `SMTP_USER` | your-gmail@gmail.com |
-| `SMTP_PASS` | Your 16-char Gmail App Password |
-| `SMTP_FROM` | `FUNDO AI <your-gmail@gmail.com>` |
+| `SMTP_EMAIL` | your-gmail@gmail.com (or Outlook/Yahoo/etc) |
+| `SMTP_PASSWORD` | Your 16-char Gmail App Password (see tip below) |
+| `TAVILY_API_KEY` | Your Tavily API key (get one free at [tavily.com](https://tavily.com)) |
 | `APP_URL` | *(leave blank for now — fill in after first deploy)* |
+
+> **No SMTP_HOST, SMTP_PORT, or SMTP_FROM needed** — they are auto-detected from your email domain.
+
+> **Gmail App Password tip:** Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), enable 2-Step Verification, generate an App Password for "Mail". Use that 16-character code as `SMTP_PASSWORD`.
 
 > **Do NOT set** `PORT`, `BASE_PATH`, or `VITE_API_BASE_URL` — they are handled automatically in single-service mode.
 
@@ -260,9 +261,10 @@ Same BK9 AI engine, same ZIMSEC alignment, same FUNDO AI personality — on What
 
 ## Credits
 
-| Role | Detail |
+| Role | Name |
 |---|---|
 | **Creator & Developer** | Darrell Mucheri 🇿🇼 |
+| **Partner & Co-owner (40%)** | Crejinai Makanyisa 🇿🇼 |
 | **Product** | FUNDO AI |
 | **WhatsApp** | +263 719 647 303 |
 | **Country** | Zimbabwe 🇿🇼 |

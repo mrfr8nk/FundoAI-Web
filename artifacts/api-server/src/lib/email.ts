@@ -1,15 +1,33 @@
 import nodemailer from "nodemailer";
 
-const SMTP_CONFIGURED = !!(process.env["SMTP_HOST"] && process.env["SMTP_USER"] && process.env["SMTP_PASS"]);
+// Support simplified SMTP config: just SMTP_EMAIL + SMTP_PASSWORD (or legacy individual vars)
+const SMTP_EMAIL = process.env["SMTP_EMAIL"] || process.env["SMTP_USER"] || "";
+const SMTP_PASSWORD = process.env["SMTP_PASSWORD"] || process.env["SMTP_PASS"] || "";
 
-const SMTP_PORT = Number(process.env["SMTP_PORT"] || 465);
+function resolveSmtpHost(email: string): { host: string; port: number } {
+  const domain = email.split("@")[1]?.toLowerCase() || "";
+  if (domain === "gmail.com" || domain === "googlemail.com") return { host: "smtp.gmail.com", port: 587 };
+  if (domain === "outlook.com" || domain === "hotmail.com" || domain === "live.com" || domain === "msn.com") return { host: "smtp-mail.outlook.com", port: 587 };
+  if (domain === "yahoo.com" || domain === "ymail.com") return { host: "smtp.mail.yahoo.com", port: 587 };
+  if (domain === "zoho.com") return { host: "smtp.zoho.com", port: 587 };
+  if (domain === "icloud.com" || domain === "me.com") return { host: "smtp.mail.me.com", port: 587 };
+  // Fall back to legacy explicit SMTP_HOST/SMTP_PORT or guess from domain
+  const explicitHost = process.env["SMTP_HOST"];
+  const explicitPort = Number(process.env["SMTP_PORT"] || 587);
+  if (explicitHost) return { host: explicitHost, port: explicitPort };
+  return { host: `smtp.${domain}`, port: 587 };
+}
+
+const { host: smtpHost, port: smtpPort } = resolveSmtpHost(SMTP_EMAIL);
+const SMTP_CONFIGURED = !!(SMTP_EMAIL && SMTP_PASSWORD);
+
 const transporter = nodemailer.createTransport({
-  host: process.env["SMTP_HOST"] || "smtp.gmail.com",
-  port: SMTP_PORT,
-  secure: SMTP_PORT === 465,
+  host: smtpHost,
+  port: smtpPort,
+  secure: smtpPort === 465,
   auth: {
-    user: process.env["SMTP_USER"],
-    pass: process.env["SMTP_PASS"],
+    user: SMTP_EMAIL,
+    pass: SMTP_PASSWORD,
   },
   tls: { rejectUnauthorized: false },
   connectionTimeout: 20000,
@@ -165,7 +183,7 @@ export async function sendMagicLinkEmail(to: string, name: string, link: string,
 
   try {
     await transporter.sendMail({
-      from: process.env["SMTP_FROM"] || `FUNDO AI <noreply@fundoai.com>`,
+      from: process.env["SMTP_FROM"] || `FUNDO AI <${SMTP_EMAIL}>`,
       to,
       subject: isNew ? `Welcome to FUNDO AI — finish your signup` : `Sign in to FUNDO AI`,
       html: base(

@@ -36,8 +36,10 @@ pnpm monorepo with:
 
 - `JWT_SECRET` — JWT signing secret
 - `MONGODB_URI` — MongoDB Atlas connection string
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — Email/SMTP config
+- `SMTP_EMAIL` — Your email address (SMTP host/port auto-detected from domain: Gmail, Outlook, Yahoo, Zoho, iCloud supported)
+- `SMTP_PASSWORD` — Your email App Password
 - `TAVILY_API_KEY` — Tavily web search API key
+- `APP_URL` — Frontend URL for magic links (set after first deploy on Render)
 - `BK9_MODEL` — BK9 AI model name (optional, default: meta-llama/llama-4-scout-17b-16e-instruct)
 
 ## Key Files

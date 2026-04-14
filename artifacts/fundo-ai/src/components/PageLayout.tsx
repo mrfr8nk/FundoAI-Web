@@ -187,7 +187,7 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
               ))}
             </div>
             <p className="text-xs" style={{ color: "#4a4a62" }}>
-              © 2025 FUNDO AI · <span className="text-violet-400">Darrell Mucheri</span>
+              © 2025 FUNDO AI · <span className="text-violet-400">Darrell Mucheri</span> & <span className="text-violet-400">Crejinai Makanyisa</span>
             </p>
           </div>
         </div>
