@@ -61,7 +61,20 @@ router.post("/magic", async (req, res) => {
     await user.save();
 
     const link = `${APP_URL}/auth/verify?token=${token}`;
-    await sendMagicLinkEmail(email, user.pendingName || user.name, link, isNew);
+    try {
+      await sendMagicLinkEmail(email, user.pendingName || user.name, link, isNew);
+    } catch (emailErr: any) {
+      console.error("[AUTH] Magic link email failed:", emailErr?.message || emailErr);
+      const msg = emailErr?.message || "Email sending failed";
+      const isConfig = msg.includes("not configured") || msg.includes("SMTP");
+      res.status(isConfig ? 503 : 500).json({
+        error: isConfig
+          ? "Email service is not configured on this server. Please contact support."
+          : `Failed to send magic link: ${msg}`,
+        detail: process.env["NODE_ENV"] !== "production" ? msg : undefined,
+      });
+      return;
+    }
 
     res.json({ message: "Magic link sent", isNew });
   } catch (err: any) {
