@@ -1,12 +1,21 @@
 import nodemailer from "nodemailer";
 
+// ── Provider priority ─────────────────────────────────────────────────────────
+// 1. Resend HTTP API  — set RESEND_API_KEY  (port 443, works on Render/any host)
+// 2. SMTP fallback    — set SMTP_EMAIL + SMTP_PASSWORD
+// 3. Both missing     — throw a clear error
+
+const RESEND_API_KEY = process.env["RESEND_API_KEY"] || "";
+const RESEND_FROM    = process.env["RESEND_FROM"] || process.env["SMTP_FROM"] || "FUNDO AI <noreply@fundoai.co.zw>";
+
 const SMTP_EMAIL    = process.env["SMTP_EMAIL"] || process.env["SMTP_USER"] || "";
 const SMTP_PASSWORD = process.env["SMTP_PASSWORD"] || process.env["SMTP_PASS"] || "";
-const SMTP_CONFIGURED = !!(SMTP_EMAIL && SMTP_PASSWORD);
+
+const RESEND_OK = !!RESEND_API_KEY;
+const SMTP_OK   = !!(SMTP_EMAIL && SMTP_PASSWORD);
 
 function resolveSmtpConfig(email: string): { host: string; port: number; secure: boolean } {
   const domain = email.split("@")[1]?.toLowerCase() || "";
-  // Use port 465 (SSL/TLS) — works on Render, never requires STARTTLS negotiation
   if (domain === "gmail.com" || domain === "googlemail.com") return { host: "smtp.gmail.com", port: 465, secure: true };
   if (domain === "outlook.com" || domain === "hotmail.com" || domain === "live.com" || domain === "msn.com") return { host: "smtp.office365.com", port: 465, secure: true };
   if (domain === "yahoo.com" || domain === "ymail.com") return { host: "smtp.mail.yahoo.com", port: 465, secure: true };
@@ -19,35 +28,49 @@ function resolveSmtpConfig(email: string): { host: string; port: number; secure:
 }
 
 const { host: smtpHost, port: smtpPort, secure: smtpSecure } = resolveSmtpConfig(SMTP_EMAIL);
-
 const smtpTransporter = nodemailer.createTransport({
   host: smtpHost,
   port: smtpPort,
   secure: smtpSecure,
   auth: { user: SMTP_EMAIL, pass: SMTP_PASSWORD },
   tls: { rejectUnauthorized: false },
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 25000,
+  connectionTimeout: 15000,
+  greetingTimeout: 15000,
+  socketTimeout: 20000,
 });
 
 // ── Core send function ────────────────────────────────────────────────────────
 async function sendEmail(opts: { to: string; subject: string; html: string }) {
-  if (!SMTP_CONFIGURED) {
-    console.warn(`[EMAIL] SMTP not configured. Would have sent "${opts.subject}" to ${opts.to}`);
-    throw new Error("Email service not configured. Set SMTP_EMAIL and SMTP_PASSWORD environment variables.");
-  }
-  try {
-    await smtpTransporter.sendMail({
-      from: process.env["SMTP_FROM"] || `FUNDO AI <${SMTP_EMAIL}>`,
-      to: opts.to,
-      subject: opts.subject,
-      html: opts.html,
+  // 1. Resend HTTP API (port 443 — never blocked)
+  if (RESEND_OK) {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: RESEND_FROM, to: opts.to, subject: opts.subject, html: opts.html }),
     });
-  } catch (err: any) {
-    console.error(`[EMAIL] SMTP sendMail failed for ${opts.to}:`, err?.message || err);
-    throw err;
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({})) as any;
+      throw new Error(`Resend API error ${res.status}: ${body?.message || body?.name || "unknown"}`);
+    }
+    return;
   }
+
+  // 2. SMTP fallback
+  if (SMTP_OK) {
+    try {
+      await smtpTransporter.sendMail({
+        from: process.env["SMTP_FROM"] || `FUNDO AI <${SMTP_EMAIL}>`,
+        to: opts.to, subject: opts.subject, html: opts.html,
+      });
+      return;
+    } catch (err: any) {
+      console.error(`[EMAIL] SMTP failed for ${opts.to}:`, err?.message || err);
+      throw err;
+    }
+  }
+
+  // 3. Nothing configured
+  throw new Error("No email provider configured. Set RESEND_API_KEY (recommended) or SMTP_EMAIL + SMTP_PASSWORD.");
 }
 
 /* ── Shared design tokens ───────────────────────────────── */
