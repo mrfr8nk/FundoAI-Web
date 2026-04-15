@@ -1,8 +1,19 @@
 import nodemailer from "nodemailer";
 
-// Support simplified SMTP config: just SMTP_EMAIL + SMTP_PASSWORD (or legacy individual vars)
-const SMTP_EMAIL = process.env["SMTP_EMAIL"] || process.env["SMTP_USER"] || "";
+// ── Provider detection ────────────────────────────────────────────────────────
+// Priority:
+//   1. Resend (RESEND_API_KEY set) → HTTP API, port 443, works on ALL hosts
+//   2. SMTP (SMTP_EMAIL + SMTP_PASSWORD set) → works on Replit / paid hosts
+//   3. Neither → throw a clear error
+
+const RESEND_API_KEY  = process.env["RESEND_API_KEY"] || "";
+const RESEND_FROM     = process.env["RESEND_FROM"] || process.env["SMTP_FROM"] || "FUNDO AI <noreply@fundoai.co.zw>";
+
+const SMTP_EMAIL    = process.env["SMTP_EMAIL"] || process.env["SMTP_USER"] || "";
 const SMTP_PASSWORD = process.env["SMTP_PASSWORD"] || process.env["SMTP_PASS"] || "";
+
+const RESEND_CONFIGURED = !!RESEND_API_KEY;
+const SMTP_CONFIGURED   = !!(SMTP_EMAIL && SMTP_PASSWORD);
 
 function resolveSmtpHost(email: string): { host: string; port: number } {
   const domain = email.split("@")[1]?.toLowerCase() || "";
@@ -11,7 +22,6 @@ function resolveSmtpHost(email: string): { host: string; port: number } {
   if (domain === "yahoo.com" || domain === "ymail.com") return { host: "smtp.mail.yahoo.com", port: 587 };
   if (domain === "zoho.com") return { host: "smtp.zoho.com", port: 587 };
   if (domain === "icloud.com" || domain === "me.com") return { host: "smtp.mail.me.com", port: 587 };
-  // Fall back to legacy explicit SMTP_HOST/SMTP_PORT or guess from domain
   const explicitHost = process.env["SMTP_HOST"];
   const explicitPort = Number(process.env["SMTP_PORT"] || 587);
   if (explicitHost) return { host: explicitHost, port: explicitPort };
@@ -19,21 +29,60 @@ function resolveSmtpHost(email: string): { host: string; port: number } {
 }
 
 const { host: smtpHost, port: smtpPort } = resolveSmtpHost(SMTP_EMAIL);
-const SMTP_CONFIGURED = !!(SMTP_EMAIL && SMTP_PASSWORD);
-
-const transporter = nodemailer.createTransport({
+const smtpTransporter = nodemailer.createTransport({
   host: smtpHost,
   port: smtpPort,
   secure: smtpPort === 465,
-  auth: {
-    user: SMTP_EMAIL,
-    pass: SMTP_PASSWORD,
-  },
+  auth: { user: SMTP_EMAIL, pass: SMTP_PASSWORD },
   tls: { rejectUnauthorized: false },
   connectionTimeout: 20000,
   greetingTimeout: 20000,
   socketTimeout: 25000,
 });
+
+// ── Core send function ────────────────────────────────────────────────────────
+async function sendEmail(opts: { to: string; subject: string; html: string; from?: string }) {
+  const from = opts.from || RESEND_FROM;
+
+  if (RESEND_CONFIGURED) {
+    // ── Resend HTTP API (port 443 — works on Render free tier) ───────────────
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ from, to: opts.to, subject: opts.subject, html: opts.html }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({})) as any;
+      throw new Error(`Resend API error ${res.status}: ${body?.message || body?.name || "unknown error"}`);
+    }
+    return;
+  }
+
+  if (SMTP_CONFIGURED) {
+    // ── Nodemailer SMTP fallback ──────────────────────────────────────────────
+    try {
+      await smtpTransporter.sendMail({
+        from: process.env["SMTP_FROM"] || `FUNDO AI <${SMTP_EMAIL}>`,
+        to: opts.to,
+        subject: opts.subject,
+        html: opts.html,
+      });
+      return;
+    } catch (smtpErr: any) {
+      console.error(`[EMAIL] SMTP sendMail failed for ${opts.to}:`, smtpErr?.message || smtpErr);
+      throw smtpErr;
+    }
+  }
+
+  // ── Neither configured ────────────────────────────────────────────────────
+  console.warn(`[EMAIL] No email provider configured. Would have sent "${opts.subject}" to ${opts.to}`);
+  throw new Error(
+    "Email service not configured. Set RESEND_API_KEY (recommended for Render) or SMTP_EMAIL + SMTP_PASSWORD."
+  );
+}
 
 /* ── Shared design tokens ───────────────────────────────── */
 const BG      = "#06030f";
@@ -97,7 +146,7 @@ function base(preheader: string, body: string): string {
                   If you didn't request this, you can safely ignore it — your account is untouched.
                 </p>
                 <p style="margin:12px 0 0;font-size:11px;color:#374151;text-align:center;">
-                  © 2025 FUNDO AI &nbsp;·&nbsp; 🇿🇼 Made in Zimbabwe by
+                  © 2026 FUNDO AI &nbsp;·&nbsp; 🇿🇼 Made in Zimbabwe by
                   <span style="color:${PURPLE};font-weight:600;"> Darrell Mucheri</span>
                 </p>
                 <p style="margin:8px 0 0;text-align:center;">
@@ -117,21 +166,16 @@ function base(preheader: string, body: string): string {
 
 /* ── Magic link email ────────────────────────────────────── */
 export async function sendMagicLinkEmail(to: string, name: string, link: string, isNew: boolean) {
-  if (!SMTP_CONFIGURED) {
-    console.warn(`[EMAIL] SMTP not configured. Would have sent magic link to ${to}: ${link}`);
-    throw new Error("Email service not configured. Please contact support or set SMTP environment variables.");
-  }
   const firstName = name.split(" ")[0];
-  const action = isNew ? "Complete signup" : "Sign in";
-  const heading = isNew ? "Finish creating your account 🚀" : "Sign in to FUNDO AI 🔐";
-  const subtitle = isNew
+  const heading   = isNew ? "Finish creating your account 🚀" : "Sign in to FUNDO AI 🔐";
+  const subtitle  = isNew
     ? `Hey <strong style="color:${SOFT};">${firstName}</strong>! One click and you're in.<br/>Your account is ready — just confirm it below.`
     : `Hey <strong style="color:${SOFT};">${firstName}</strong>! Click the button below to sign in.<br/>This link expires in 15 minutes.`;
-  const btnLabel = isNew ? "Create My Account →" : "Sign In to FUNDO AI →";
-  const btnColor = isNew ? `linear-gradient(135deg,${PURPLE},#7c3aed)` : `linear-gradient(135deg,${CYAN},#0891b2)`;
+  const btnLabel  = isNew ? "Create My Account →" : "Sign In to FUNDO AI →";
+  const btnColor  = isNew ? `linear-gradient(135deg,${PURPLE},#7c3aed)` : `linear-gradient(135deg,${CYAN},#0891b2)`;
   const btnShadow = isNew ? "rgba(168,85,247,0.4)" : "rgba(6,182,212,0.4)";
   const boxBorder = isNew ? "rgba(168,85,247,0.25)" : "rgba(6,182,212,0.22)";
-  const boxBg = isNew ? "rgba(168,85,247,0.06)" : "rgba(6,182,212,0.06)";
+  const boxBg     = isNew ? "rgba(168,85,247,0.06)" : "rgba(6,182,212,0.06)";
 
   const body = `
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:900;color:${WHITE};text-align:center;letter-spacing:-0.5px;">${heading}</h1>
@@ -181,21 +225,15 @@ export async function sendMagicLinkEmail(to: string, name: string, link: string,
     </table>`}
   `;
 
-  try {
-    await transporter.sendMail({
-      from: process.env["SMTP_FROM"] || `FUNDO AI <${SMTP_EMAIL}>`,
-      to,
-      subject: isNew ? `Welcome to FUNDO AI — finish your signup` : `Sign in to FUNDO AI`,
-      html: base(
-        isNew ? `Welcome! Click to finish creating your FUNDO AI account. Link expires in 15 minutes.`
-              : `Your FUNDO AI sign-in link is ready. Click to sign in — expires in 15 minutes.`,
-        body
-      ),
-    });
-  } catch (smtpErr: any) {
-    console.error(`[EMAIL] SMTP sendMail failed for ${to}:`, smtpErr?.message || smtpErr);
-    throw smtpErr;
-  }
+  await sendEmail({
+    to,
+    subject: isNew ? `Welcome to FUNDO AI — finish your signup` : `Sign in to FUNDO AI`,
+    html: base(
+      isNew ? `Welcome! Click to finish creating your FUNDO AI account. Link expires in 15 minutes.`
+            : `Your FUNDO AI sign-in link is ready. Click to sign in — expires in 15 minutes.`,
+      body
+    ),
+  });
 }
 
 /* ── Legacy: kept for backward compatibility ─────────────── */
@@ -205,15 +243,11 @@ export async function sendVerificationEmail(to: string, name: string, code: stri
 }
 
 export async function sendPasswordResetEmail(to: string, name: string, code: string) {
-  if (!SMTP_CONFIGURED) {
-    console.warn(`[EMAIL] SMTP not configured. Password reset code for ${to}: ${code}`);
-    throw new Error("Email service not configured. Please contact support or set SMTP environment variables.");
-  }
   const digits = code.split("");
   const body = `
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:900;color:${WHITE};text-align:center;letter-spacing:-0.5px;">Reset your password 🔑</h1>
     <p style="margin:0 0 32px;font-size:15px;color:${MUTED};text-align:center;line-height:1.6;">
-      Hey <strong style="color:${SOFT};">${name.split(" ")[0]}</strong>! Your password reset code:
+      Hey! Your password reset code:
     </p>
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom:24px;">
       <tr><td align="center" style="background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.22);border-radius:16px;padding:28px 20px;">
@@ -229,8 +263,7 @@ export async function sendPasswordResetEmail(to: string, name: string, code: str
       </td>
     </tr></table>
   `;
-  await transporter.sendMail({
-    from: process.env["SMTP_FROM"] || `FUNDO AI <noreply@fundoai.com>`,
+  await sendEmail({
     to,
     subject: `${code} — Reset your FUNDO AI password`,
     html: base(`Your FUNDO AI password reset code is ${code}. Expires in 10 minutes.`, body),
