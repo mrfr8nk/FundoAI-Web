@@ -33,8 +33,7 @@ const transporter = nodemailer.createTransport({
   connectionTimeout: 20000,
   greetingTimeout: 20000,
   socketTimeout: 25000,
-  family: 4,
-} as any);
+});
 
 /* ── Shared design tokens ───────────────────────────────── */
 const BG      = "#06030f";
