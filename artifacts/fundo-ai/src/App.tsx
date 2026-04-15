@@ -16,6 +16,7 @@ import Privacy from "@/pages/Privacy";
 import Terms from "@/pages/Terms";
 import Pricing from "@/pages/Pricing";
 import Upgrade from "@/pages/Upgrade";
+import Admin from "@/pages/Admin";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/upgrade" component={Upgrade} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );

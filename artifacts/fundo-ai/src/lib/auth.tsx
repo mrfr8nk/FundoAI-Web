@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { api } from "./api";
 
-interface User { id: string; name: string; email: string; level: string; }
+interface User { id: string; name: string; email: string; level: string; isAdmin?: boolean; }
 interface AuthCtx {
   user: User | null;
   token: string | null;

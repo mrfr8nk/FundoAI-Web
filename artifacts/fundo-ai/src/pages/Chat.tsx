@@ -616,6 +616,18 @@ export default function Chat() {
                         </button>
                       </div>
                       <div className="p-2 pt-0" style={{ borderTop: "1px solid #1e1e2b" }}>
+                        {user.isAdmin && (
+                          <button onClick={() => { nav("/admin"); setShowUserMenu(false); }}
+                            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-medium transition-all text-left mb-1"
+                            style={{ color: "#a855f7" }}
+                            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(139,92,246,0.15)"; }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; }}>
+                            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "rgba(139,92,246,0.15)", border: "1px solid rgba(139,92,246,0.3)" }}>
+                              <Shield size={12} />
+                            </div>
+                            Admin Portal
+                          </button>
+                        )}
                         <button onClick={() => { nav("/"); setShowUserMenu(false); }}
                           className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-xs font-medium transition-all text-left"
                           style={{ color: "#6b6b85" }}

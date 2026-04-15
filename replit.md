@@ -45,8 +45,24 @@ PayNow secrets needed: `PAYNOW_INTEGRATION_ID`, `PAYNOW_INTEGRATION_KEY`
 - `/` — Home with hero, features (12), how it works, demo, pricing preview, CTA
 - `/pricing` — Full Stripe-style pricing page with 5 plan cards
 - `/upgrade?plan=<id>` — EcoCash/card checkout page (requires auth)
-- `/chat` — AI chat interface
+- `/chat` — AI chat interface (admin users see "Admin Portal" shortcut in user menu)
+- `/admin` — Admin portal (only accessible to `support.fundo.ai@gmail.com` and `isAdmin` users)
 - `/about`, `/privacy`, `/terms` — Info pages
+
+## Admin Portal (`/admin`)
+
+Accessible only to `support.fundo.ai@gmail.com` (auto-granted on first login). Tabs:
+- **Dashboard** — Total users, verified/unverified, paid users, new users today/week/month, chats today, users-by-plan bar chart
+- **Users** — Search by name/email, filter by plan, sort options, inline plan editing, delete user
+- **Site Settings** — Edit WhatsApp bot number (updates all `wa.me` links site-wide instantly), site announcement banner
+
+## Site Config (dynamic settings)
+
+`SiteConfig` MongoDB model (key/value store) exposed via:
+- `GET /api/config` — public endpoint, returns `whatsapp_number` and `announcement`
+- `GET /api/admin/config` + `PATCH /api/admin/config` — admin-only read/write
+- Frontend hook: `artifacts/fundo-ai/src/hooks/useConfig.ts` — cached, used on Home, Pricing, About pages
+- Default WhatsApp: `263719647303`
 
 ## Workflows
 

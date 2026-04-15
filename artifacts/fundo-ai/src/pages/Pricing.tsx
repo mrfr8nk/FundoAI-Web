@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { Check, Zap, Crown, Star, Rocket, Shield, ArrowRight, MessageCircle } from "lucide-react";
 import PageLayout from "@/components/PageLayout";
 import { useAuth } from "@/lib/auth";
+import { useConfig, waLink } from "@/hooks/useConfig";
 
 const PLANS = [
   {
@@ -142,6 +143,7 @@ const CAPABILITIES = [
 export default function Pricing() {
   const [, nav] = useLocation();
   const { user } = useAuth();
+  const config = useConfig();
   const [hoveredPlan, setHoveredPlan] = useState<string | null>(null);
 
   function handleCTA(planId: string) {
@@ -315,7 +317,7 @@ export default function Pricing() {
               <button onClick={() => nav(user ? "/chat" : "/signup")} className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 20px rgba(168,85,247,0.35)" }}>
                 Get started free <ArrowRight size={14} />
               </button>
-              <a href="https://wa.me/263719647303" target="_blank" rel="noopener" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold" style={{ background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.25)", color: "#25d366" }}>
+              <a href={waLink(config.whatsapp_number)} target="_blank" rel="noopener" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold" style={{ background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.25)", color: "#25d366" }}>
                 <MessageCircle size={14} /> Try on WhatsApp
               </a>
             </div>

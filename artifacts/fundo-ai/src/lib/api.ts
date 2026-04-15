@@ -78,6 +78,27 @@ export const api = {
     request("/billing/upgrade", { method: "POST", body: JSON.stringify(body) }),
   billingPoll: (plan: string) => request(`/billing/poll?plan=${plan}`),
 
+  // Public config (no auth needed)
+  getConfig: () => request("/config"),
+
+  // Admin (requires admin token)
+  adminStats: () => request("/admin/stats"),
+  adminUsers: (params: { search?: string; plan?: string; page?: number; sort?: string }) => {
+    const q = new URLSearchParams();
+    if (params.search) q.set("search", params.search);
+    if (params.plan)   q.set("plan", params.plan);
+    if (params.page)   q.set("page", String(params.page));
+    if (params.sort)   q.set("sort", params.sort);
+    return request(`/admin/users?${q}`);
+  },
+  adminUpdateUser: (id: string, body: Record<string, any>) =>
+    request(`/admin/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  adminDeleteUser: (id: string) =>
+    request(`/admin/users/${id}`, { method: "DELETE" }),
+  adminGetConfig: () => request("/admin/config"),
+  adminUpdateConfig: (body: Record<string, string>) =>
+    request("/admin/config", { method: "PATCH", body: JSON.stringify(body) }),
+
   // File upload
   uploadFile: async (file: File) => {
     const formData = new FormData();

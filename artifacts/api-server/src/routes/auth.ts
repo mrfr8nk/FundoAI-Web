@@ -109,10 +109,14 @@ router.get("/magic/verify", async (req, res) => {
     user.isVerified = true;
     user.magicToken = null;
     user.magicTokenExpires = null;
+    // Auto-grant admin for the owner email
+    if (user.email === "support.fundo.ai@gmail.com" && !user.isAdmin) {
+      user.isAdmin = true;
+    }
     await user.save();
 
     const jwt = signToken(String(user._id));
-    res.json({ token: jwt, user: { id: user._id, name: user.name, email: user.email, level: user.level } });
+    res.json({ token: jwt, user: { id: user._id, name: user.name, email: user.email, level: user.level, isAdmin: user.isAdmin } });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -270,7 +274,7 @@ router.post("/reset-password", async (req, res) => {
 // ── GET /api/auth/me ──────────────────────────────────────────────────────────
 router.get("/me", requireAuth, (req, res) => {
   const user = (req as any).user;
-  res.json({ user: { id: user._id, name: user.name, email: user.email, level: user.level, hasPassword: !!user.password } });
+  res.json({ user: { id: user._id, name: user.name, email: user.email, level: user.level, isAdmin: user.isAdmin, hasPassword: !!user.password } });
 });
 
 // ── POST /api/auth/set-password ───────────────────────────────────────────────

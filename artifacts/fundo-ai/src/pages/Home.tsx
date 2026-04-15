@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
+import { useConfig, waLink } from "@/hooks/useConfig";
 import {
   Brain, BookOpen, Globe, Calculator, FileText, Database,
   Bot, ArrowRight, Users, Target, Clock, Star,
@@ -137,7 +138,7 @@ const FEATURES = [
   { icon: Sparkles,    title: "Flash Quizzes",            desc: "Practice exams and flash quizzes for any ZIMSEC subject and level — instant feedback." },
   { icon: Search,      title: "Study Materials Library",  desc: "Syllabuses, textbooks, past exam papers, and marking schemes — all sent directly to you." },
   { icon: Zap,         title: "Weather & Time",           desc: "Live weather for any city worldwide and time zone lookups for anywhere on the planet." },
-  { icon: MessageCircle, title: "WhatsApp + Web",         desc: "Same FUNDO AI experience on WhatsApp (+263 719 647 303) and this web platform — always in sync." },
+  { icon: MessageCircle, title: "WhatsApp + Web",         desc: "Same FUNDO AI experience on WhatsApp and this web platform — chat history always in sync." },
 ];
 
 const STEPS = [
@@ -295,6 +296,7 @@ export default function Home() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [, nav] = useLocation();
   const { user, logout } = useAuth();
+  const config = useConfig();
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20);
@@ -712,7 +714,7 @@ export default function Home() {
                   Create free account <ArrowRight size={15} />
                 </button>
                 <a
-                  href="https://wa.me/263719647303"
+                  href={waLink(config.whatsapp_number)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-8 py-4 rounded-xl text-sm font-semibold transition-colors w-full sm:w-auto justify-center"

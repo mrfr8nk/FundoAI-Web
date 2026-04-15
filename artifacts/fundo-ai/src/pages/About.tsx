@@ -1,9 +1,11 @@
 import { Bot, Zap, Globe, Heart, GraduationCap, MessageCircle, Star } from "lucide-react";
 import { useLocation } from "wouter";
 import PageLayout from "@/components/PageLayout";
+import { useConfig, waLink } from "@/hooks/useConfig";
 
 export default function About() {
   const [, nav] = useLocation();
+  const config = useConfig();
 
   const timeline = [
     { year: "2024", title: "The Idea", desc: "Darrell noticed Zimbabwean students struggling to access quality AI tutoring in their local curriculum context." },
@@ -169,7 +171,7 @@ export default function About() {
               <button onClick={() => nav("/signup")} className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white" style={{ background: "linear-gradient(135deg,#a855f7,#7c3aed)", boxShadow: "0 4px 20px rgba(168,85,247,0.35)" }}>
                 <Bot size={16} />Get started free
               </button>
-              <a href="https://wa.me/263719647303" target="_blank" rel="noopener" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold" style={{ background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.25)", color: "#25d366" }}>
+              <a href={waLink(config.whatsapp_number)} target="_blank" rel="noopener" className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold" style={{ background: "rgba(37,211,102,0.1)", border: "1px solid rgba(37,211,102,0.25)", color: "#25d366" }}>
                 <MessageCircle size={16} />WhatsApp instead
               </a>
             </div>

@@ -5,6 +5,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   isVerified: boolean;
+  isAdmin: boolean;
   magicToken: string | null;
   magicTokenExpires: Date | null;
   pendingName: string | null;
@@ -31,6 +32,7 @@ const UserSchema = new Schema<IUser>({
   email:              { type: String, required: true, unique: true, lowercase: true, trim: true },
   password:           { type: String, default: "" },
   isVerified:         { type: Boolean, default: false },
+  isAdmin:            { type: Boolean, default: false },
   magicToken:         { type: String, default: null },
   magicTokenExpires:  { type: Date, default: null },
   pendingName:        { type: String, default: null },
