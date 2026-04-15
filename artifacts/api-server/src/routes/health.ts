@@ -20,14 +20,16 @@ router.get("/api-config-check", async (_req, res) => {
     ? { ok: true, detail: "set" }
     : { ok: false, detail: "NOT SET — all database operations will fail (500)" };
 
-  const hasResend = !!process.env["RESEND_API_KEY"];
-  const hasSmtp   = !!(process.env["SMTP_EMAIL"] || process.env["SMTP_USER"]) && !!(process.env["SMTP_PASSWORD"] || process.env["SMTP_PASS"]);
+  const smtpEmail = process.env["SMTP_EMAIL"] || process.env["SMTP_USER"];
+  const smtpPass  = process.env["SMTP_PASSWORD"] || process.env["SMTP_PASS"];
 
-  checks["Email provider"] = hasResend
-    ? { ok: true, detail: "Resend API (recommended — works on Render)" }
-    : hasSmtp
-      ? { ok: true, detail: `SMTP via ${process.env["SMTP_EMAIL"] || process.env["SMTP_USER"]} (may be blocked on Render free tier — set RESEND_API_KEY instead)` }
-      : { ok: false, detail: "NOT SET — set RESEND_API_KEY (resend.com, free) or SMTP_EMAIL + SMTP_PASSWORD" };
+  checks["SMTP_EMAIL"] = smtpEmail
+    ? { ok: true, detail: smtpEmail }
+    : { ok: false, detail: "NOT SET — magic link emails will fail" };
+
+  checks["SMTP_PASSWORD"] = smtpPass
+    ? { ok: true, detail: "set" }
+    : { ok: false, detail: "NOT SET — magic link emails will fail" };
 
   checks["APP_URL"] = process.env["APP_URL"]
     ? { ok: true, detail: process.env["APP_URL"] }
